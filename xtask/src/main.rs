@@ -26,7 +26,9 @@ fn dist() -> DynResult {
 
     dist_binary()?;
 
-    dist_manpage()
+    let cmd = Cmd::command();
+    dist_manpage(&cmd)?;
+    dist_completions(&cmd)
 }
 
 /// Build and strip binary
@@ -51,11 +53,9 @@ fn dist_binary() -> DynResult {
 }
 
 /// Generate man page for binary and subcommands
-fn dist_manpage() -> DynResult {
+fn dist_manpage(cmd: &clap::Command) -> DynResult {
     eprintln!("Generating man pages");
-
-    let cmd = Cmd::command();
-    generate_manpage(&cmd)?;
+    generate_manpage(cmd)?;
 
     for sub in cmd.get_subcommands() {
         generate_manpage(sub)?
@@ -112,6 +112,11 @@ fn generate_manpage(cmd: &clap::Command) -> DynResult {
 
     eprintln!("Created {}", file.to_str().unwrap());
 
+    Ok(())
+}
+
+/// Generate completion scripts
+fn dist_completions(cmd: &clap::Command) -> DynResult {
     Ok(())
 }
 
