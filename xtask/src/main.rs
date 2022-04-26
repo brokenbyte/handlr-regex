@@ -1,4 +1,5 @@
 use clap::{CommandFactory, Parser};
+use clap_complete::{generate_to, Generator, Shell};
 use devx_cmd::{cmd, run};
 use handlr_regex::Cmd;
 use std::{
@@ -26,9 +27,9 @@ fn dist() -> DynResult {
 
     dist_binary()?;
 
-    let cmd = Cmd::command();
+    let mut cmd = Cmd::command();
     dist_manpage(&cmd)?;
-    dist_completions(&cmd)
+    dist_completions(&mut cmd)
 }
 
 /// Build and strip binary
@@ -107,16 +108,18 @@ fn generate_manpage(cmd: &clap::Command) -> DynResult {
     };
 
     let file = out_dir.join(file);
-
     fs::write(&file, buffer)?;
-
     eprintln!("Created {}", file.to_str().unwrap());
-
     Ok(())
 }
 
 /// Generate completion scripts
-fn dist_completions(cmd: &clap::Command) -> DynResult {
+fn dist_completions(cmd: &mut clap::Command) -> DynResult {
+    let bin_name = "handlr";
+    let file = dist_dir().join(bin_name);
+    generate_to(Shell::Zsh, cmd, bin_name, dist_dir())?;
+
+    eprintln!("Created {}", file.to_str().unwrap());
     Ok(())
 }
 
