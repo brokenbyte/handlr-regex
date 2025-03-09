@@ -70,7 +70,11 @@ fn main() -> Result<()> {
         Cmd::Remove { mime, handler } => config.remove_handler(&mime, &handler),
     };
 
-    notify_on_err(res, "handlr error", show_notifications)
+    notify_on_err(
+        res,
+        "handlr error",
+        show_notifications && config.config.notifications,
+    )
 }
 
 /// Issue a notification if given an error and not running in a terminal

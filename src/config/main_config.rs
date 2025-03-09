@@ -27,7 +27,7 @@ pub struct Config {
     /// Available applications on the system
     system_apps: SystemApps,
     /// Handlr-specific config file
-    config: ConfigFile,
+    pub config: ConfigFile,
     /// Whether or not stdout is a terminal
     pub terminal_output: bool,
 }
