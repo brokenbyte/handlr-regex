@@ -5,6 +5,8 @@ mod config;
 mod error;
 mod utils;
 
+use std::io::IsTerminal;
+
 use cli::{Cli, Cmd};
 use common::mime_table;
 use config::Config;
@@ -19,9 +21,18 @@ fn main() -> Result<()> {
         .completer("handlr")
         .complete();
 
-    let mut config = Config::new()?;
-    let mut stdout = std::io::stdout().lock();
+    let terminal_output = std::io::stdout().is_terminal();
+    let config = Config::new(terminal_output);
 
+    // Issue a notification if handlr is not being run in a terminal
+    if let Err(ref e) = config {
+        if !terminal_output {
+            utils::notify("handlr error", &e.to_string())?
+        }
+    }
+
+    let mut config = config?;
+    let mut stdout = std::io::stdout().lock();
     let Cli { command } = Cli::parse();
 
     let res = match command {
