@@ -4,7 +4,7 @@ use crate::{
     apps::SystemApps,
     common::{mime_types, DesktopHandler, MimeOrExtension, UserPath},
 };
-use clap::{builder::StyledStr, Args, Parser, Subcommand};
+use clap::{builder::StyledStr, ArgAction, Args, Parser, Subcommand};
 use clap_complete::{
     engine::{ArgValueCompleter, CompletionCandidate},
     PathCompleter,
@@ -24,6 +24,10 @@ use clap_complete::{
 pub struct Cli {
     #[command(subcommand)]
     pub command: Cmd,
+
+    /// Disable notifications on error
+    #[clap(long = "disable-notifications", short = 'n', action = ArgAction::SetFalse)]
+    pub notifications: bool,
 }
 
 #[deny(missing_docs)]

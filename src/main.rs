@@ -21,13 +21,20 @@ fn main() -> Result<()> {
         .complete();
 
     let terminal_output = std::io::stdout().is_terminal();
+    let Cli {
+        command,
+        notifications,
+    } = Cli::parse();
+
+    let show_notifications = !terminal_output && notifications;
+
     let mut config = notify_on_err(
         Config::new(terminal_output),
         "handlr config error",
-        terminal_output,
+        show_notifications,
     )?;
+
     let mut stdout = std::io::stdout().lock();
-    let Cli { command } = Cli::parse();
 
     let res = match command {
         Cmd::Set { mime, handler } => config.set_handler(&mime, &handler),
@@ -63,7 +70,7 @@ fn main() -> Result<()> {
         Cmd::Remove { mime, handler } => config.remove_handler(&mime, &handler),
     };
 
-    notify_on_err(res, "handlr error", terminal_output)
+    notify_on_err(res, "handlr error", show_notifications)
 }
 
 /// Issue a notification if given an error and not running in a terminal
@@ -71,10 +78,10 @@ fn main() -> Result<()> {
 pub fn notify_on_err<T>(
     res: Result<T>,
     title: &str,
-    terminal_output: bool,
+    show_notifications: bool,
 ) -> Result<T> {
-    if let Err(ref e) = res {
-        if !terminal_output {
+    if show_notifications {
+        if let Err(ref e) = res {
             std::process::Command::new("notify-send")
                 .args([
                     "--expire-time=10000",
