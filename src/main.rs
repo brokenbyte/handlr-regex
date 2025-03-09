@@ -5,7 +5,7 @@ mod config;
 mod error;
 mod utils;
 
-use cli::Cmd;
+use cli::{Cli, Cmd};
 use common::mime_table;
 use config::Config;
 use error::Result;
@@ -15,14 +15,16 @@ use clap_complete::CompleteEnv;
 
 #[mutants::skip] // Cannot test directly at the moment
 fn main() -> Result<()> {
-    CompleteEnv::with_factory(|| Cmd::command().name("handlr"))
+    CompleteEnv::with_factory(|| Cli::command().name("handlr"))
         .completer("handlr")
         .complete();
 
     let mut config = Config::new()?;
     let mut stdout = std::io::stdout().lock();
 
-    let res = match Cmd::parse() {
+    let Cli { command } = Cli::parse();
+
+    let res = match command {
         Cmd::Set { mime, handler } => config.set_handler(&mime, &handler),
         Cmd::Add { mime, handler } => config.add_handler(&mime, &handler),
         Cmd::Launch {

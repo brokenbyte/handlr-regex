@@ -4,7 +4,7 @@ use crate::{
     apps::SystemApps,
     common::{mime_types, DesktopHandler, MimeOrExtension, UserPath},
 };
-use clap::{builder::StyledStr, Args, Parser};
+use clap::{builder::StyledStr, Args, Parser, Subcommand};
 use clap_complete::{
     engine::{ArgValueCompleter, CompletionCandidate},
     PathCompleter,
@@ -21,6 +21,13 @@ use clap_complete::{
 #[derive(Parser)]
 #[clap(disable_help_subcommand = true)]
 #[clap(version, about)]
+pub struct Cli {
+    #[command(subcommand)]
+    pub command: Cmd,
+}
+
+#[deny(missing_docs)]
+#[derive(Clone, Subcommand)]
 pub enum Cmd {
     /// List default apps and the associated handlers
     ///
