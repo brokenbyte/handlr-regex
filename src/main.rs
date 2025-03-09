@@ -3,7 +3,6 @@ mod cli;
 mod common;
 mod config;
 mod error;
-mod utils;
 
 use std::io::IsTerminal;
 
@@ -22,16 +21,11 @@ fn main() -> Result<()> {
         .complete();
 
     let terminal_output = std::io::stdout().is_terminal();
-    let config = Config::new(terminal_output);
-
-    // Issue a notification if handlr is not being run in a terminal
-    if let Err(ref e) = config {
-        if !terminal_output {
-            utils::notify("handlr error", &e.to_string())?
-        }
-    }
-
-    let mut config = config?;
+    let mut config = notify_on_err(
+        Config::new(terminal_output),
+        "handlr config error",
+        terminal_output,
+    )?;
     let mut stdout = std::io::stdout().lock();
     let Cli { command } = Cli::parse();
 
@@ -69,10 +63,26 @@ fn main() -> Result<()> {
         Cmd::Remove { mime, handler } => config.remove_handler(&mime, &handler),
     };
 
-    // Issue a notification if handlr is not being run in a terminal
+    notify_on_err(res, "handlr error", terminal_output)
+}
+
+/// Issue a notification if given an error and not running in a terminal
+#[mutants::skip] // Cannot test directly, runs external command
+pub fn notify_on_err<T>(
+    res: Result<T>,
+    title: &str,
+    terminal_output: bool,
+) -> Result<T> {
     if let Err(ref e) = res {
-        if !config.terminal_output {
-            utils::notify("handlr error", &e.to_string())?
+        if !terminal_output {
+            std::process::Command::new("notify-send")
+                .args([
+                    "--expire-time=10000",
+                    "--icon=dialog-error",
+                    title,
+                    &e.to_string(),
+                ])
+                .spawn()?;
         }
     }
 
