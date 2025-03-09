@@ -6,7 +6,7 @@ mod cli {
 mod apps;
 mod common;
 
-use cli::Cmd;
+use cli::Cli;
 
 use clap::CommandFactory;
 use std::{env, error::Error, fs::create_dir_all, path::Path};
@@ -30,7 +30,7 @@ fn mangen(out_dir: &Path) -> DynResult {
     let dest_dir = out_dir.join("manual/man1");
     create_dir_all(&dest_dir)?;
 
-    clap_mangen::generate_to(Cmd::command().name("handlr"), &dest_dir)?;
+    clap_mangen::generate_to(Cli::command().name("handlr"), &dest_dir)?;
 
     Ok(())
 }

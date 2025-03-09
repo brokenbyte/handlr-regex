@@ -1,8 +1,11 @@
+// FIXME
+#![allow(clippy::mutable_key_type)]
+
 use mime::Mime;
 use serde::Serialize;
 use std::{
     collections::{BTreeMap, HashMap, VecDeque},
-    io::{IsTerminal, Write},
+    io::Write,
     str::FromStr,
 };
 use tabled::Tabled;
@@ -13,7 +16,6 @@ use crate::{
     common::{render_table, DesktopHandler, Handleable, Handler, UserPath},
     config::config_file::ConfigFile,
     error::{Error, Result},
-    utils,
 };
 
 /// A single struct that holds all apps and config.
@@ -25,24 +27,15 @@ pub struct Config {
     /// Available applications on the system
     system_apps: SystemApps,
     /// Handlr-specific config file
-    config: ConfigFile,
+    pub config: ConfigFile,
     /// Whether or not stdout is a terminal
     pub terminal_output: bool,
 }
 
 impl Config {
     /// Create a new instance of AppsConfig
-    pub fn new() -> Result<Self> {
+    pub fn new(terminal_output: bool) -> Result<Self> {
         let config = ConfigFile::load();
-        let terminal_output = std::io::stdout().is_terminal();
-
-        // Issue a notification if handlr is not being run in a terminal
-        // Config's errors are not able to be handled by `main`'s similar error handling
-        if let Err(ref e) = config {
-            if !terminal_output {
-                utils::notify("handlr error", &e.to_string())?
-            }
-        }
 
         Ok(Self {
             // Ensure fields individually default rather than making the whole thing fail if one is missing
