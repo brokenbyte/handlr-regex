@@ -1,3 +1,6 @@
+// FIXME
+#![allow(clippy::mutable_key_type)]
+
 use mime::Mime;
 use serde::Serialize;
 use std::{
