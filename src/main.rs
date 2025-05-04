@@ -23,10 +23,10 @@ fn main() -> Result<()> {
     let terminal_output = std::io::stdout().is_terminal();
     let Cli {
         command,
-        notifications,
+        enable_notifications,
     } = Cli::parse();
 
-    let show_notifications = !terminal_output && notifications;
+    let show_notifications = !terminal_output && enable_notifications;
 
     let mut config = notify_on_err(
         Config::new(terminal_output),
@@ -73,7 +73,7 @@ fn main() -> Result<()> {
     notify_on_err(
         res,
         "handlr error",
-        show_notifications && config.config.notifications,
+        show_notifications && config.config.enable_notifications,
     )
 }
 

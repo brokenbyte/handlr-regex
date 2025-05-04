@@ -27,7 +27,7 @@ pub struct Cli {
 
     /// Disable notifications on error
     #[clap(long = "disable-notifications", short = 'n', action = ArgAction::SetFalse)]
-    pub notifications: bool,
+    pub enable_notifications: bool,
 }
 
 #[deny(missing_docs)]

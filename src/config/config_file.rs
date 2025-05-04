@@ -18,7 +18,7 @@ pub struct ConfigFile {
     /// Whether to expand wildcards when saving mimeapps.list
     pub expand_wildcards: bool,
     /// Whether to show notifications on errors
-    pub notifications: bool,
+    pub enable_notifications: bool,
     /// Regex handlers
     // NOTE: Serializing is only necessary for generating a default config file
     #[serde(skip_serializing)]
@@ -34,7 +34,7 @@ impl Default for ConfigFile {
             // Unfortunately, messes up emulators that don't accept it
             term_exec_args: Some("-e".into()),
             expand_wildcards: false,
-            notifications: true,
+            enable_notifications: true,
             handlers: Default::default(),
         }
     }
