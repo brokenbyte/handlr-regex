@@ -9,15 +9,20 @@ use url::Url;
 pub struct MimeType(pub Mime);
 
 impl MimeType {
+    /// Gets the `Mime` from a given file extension
     fn from_ext(ext: &str) -> Result<Mime> {
-        match &*xdg_mime::SharedMimeInfo::new()
+        match xdg_mime::SharedMimeInfo::new()
             .get_mime_types_from_file_name(ext)
+            .into_iter()
+            .nth(0)
+            .expect("handlr: xdg_mime::get_mime_types_from_file_type should always return a non-empty Vec<Mime>")
         {
-            [m] if m == &mime::APPLICATION_OCTET_STREAM => {
-                Err(Error::Ambiguous(ext.into()))
+            // If the file extension is ambiguous, then error
+            // Otherwise, the user may not expect this mimetype being assigned
+            mime if mime == mime::APPLICATION_OCTET_STREAM => {
+                Err(Error::AmbiguousExtension(ext.into()))
             }
-            [guess, ..] => Ok(guess.clone()),
-            [] => unreachable!(),
+            mime => Ok(mime)
         }
     }
 }
@@ -40,16 +45,11 @@ impl TryFrom<&Path> for MimeType {
         guess.file_name(&path.to_string_lossy());
 
         let mime = if let Some(mime) =
-            mime_to_option(&db, guess.guess().mime_type().clone(), true)
+            mime_to_option(&db, guess.guess().mime_type().clone())
         {
             mime
         } else {
-            mime_to_option(
-                &db,
-                guess.path(path).guess().mime_type().clone(),
-                false,
-            )
-            .ok_or_else(|| Error::Ambiguous(path.to_owned()))?
+            guess.path(path).guess().mime_type().clone()
         };
 
         Ok(Self(mime))
@@ -57,24 +57,20 @@ impl TryFrom<&Path> for MimeType {
 }
 
 /// Tests if a given mime is "acceptable" and returns None otherwise
-fn mime_to_option(
-    db: &xdg_mime::SharedMimeInfo,
-    mime: Mime,
-    discard_zerosize: bool,
-) -> Option<Mime> {
-    let application_zerosize: Mime = "application/x-zerosize".parse().ok()?;
-
-    if mime == mime::APPLICATION_OCTET_STREAM
-        || (db.mime_type_equal(&mime, &application_zerosize)
-            && discard_zerosize)
-    {
+fn mime_to_option(db: &xdg_mime::SharedMimeInfo, mime: Mime) -> Option<Mime> {
+    if db.mime_type_equal(
+        &mime,
+        &"application/x-zerosize"
+            .parse()
+            .expect("handlr: hardcoded mime should be valid"),
+    ) {
         None
     } else {
         Some(mime)
     }
 }
 
-/// Mime derived from user input: extension(.pdf) or type like image/jpg
+/// Mime derived from user input: extension (e.g. .pdf) or type (e.g. image/jpg)
 #[derive(Debug, Clone, Deref)]
 pub struct MimeOrExtension(pub Mime);
 
@@ -158,11 +154,15 @@ mod tests {
     }
 
     #[test]
-    fn from_ext() -> Result<()> {
+    fn from_str() -> Result<()> {
         assert_eq!(".mp3".parse::<MimeOrExtension>()?.0, "audio/mpeg");
         assert_eq!("audio/mpeg".parse::<MimeOrExtension>()?.0, "audio/mpeg");
         assert!(".".parse::<MimeOrExtension>().is_err());
         assert!("audio/".parse::<MimeOrExtension>().is_err());
+        assert_eq!(
+            "application/octet-stream".parse::<MimeOrExtension>()?.0,
+            "application/octet-stream"
+        );
 
         Ok(())
     }
