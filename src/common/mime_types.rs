@@ -149,6 +149,10 @@ mod tests {
             MimeType::try_from(Path::new("./tests/empty"))?.0,
             "application/x-zerosize"
         );
+        assert_eq!(
+            MimeType::try_from(Path::new("./tests/nonsense_binary_data"))?.0,
+            "application/octet-stream"
+        );
 
         Ok(())
     }
