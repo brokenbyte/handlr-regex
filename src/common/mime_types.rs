@@ -44,29 +44,17 @@ impl TryFrom<&Path> for MimeType {
         let mut guess = db.guess_mime_type();
         guess.file_name(&path.to_string_lossy());
 
-        let mime = if let Some(mime) =
-            mime_to_option(&db, guess.guess().mime_type().clone())
+        let mut mime = guess.guess().mime_type().clone();
+        // TODO: remove this check once xdg-mime crate makes a new release (currently v0.4.0)
+        if mime
+            == "application/x-zerosize"
+                .parse::<Mime>()
+                .expect("handlr: hardcoded mime should be valid")
         {
-            mime
-        } else {
-            guess.path(path).guess().mime_type().clone()
-        };
+            mime = guess.path(path).guess().mime_type().clone();
+        }
 
-        Ok(Self(mime))
-    }
-}
-
-/// Tests if a given mime is "acceptable" and returns None otherwise
-fn mime_to_option(db: &xdg_mime::SharedMimeInfo, mime: Mime) -> Option<Mime> {
-    if db.mime_type_equal(
-        &mime,
-        &"application/x-zerosize"
-            .parse()
-            .expect("handlr: hardcoded mime should be valid"),
-    ) {
-        None
-    } else {
-        Some(mime)
+        Ok(Self(mime.clone()))
     }
 }
 
