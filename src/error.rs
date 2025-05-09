@@ -9,8 +9,10 @@ pub enum Error {
     Config(#[from] confy::ConfyError),
     #[error("no handlers found for '{0}'")]
     NotFound(String),
-    #[error("could not figure out the mime type of '{0}'")]
-    Ambiguous(std::path::PathBuf),
+    #[error(
+        "Could not find a mimetype associated with the file extension: '{0}'"
+    )]
+    AmbiguousExtension(String),
     #[error(transparent)]
     BadMimeType(#[from] mime::FromStrError),
     #[error("bad mime: {0}")]
