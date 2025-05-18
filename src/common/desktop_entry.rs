@@ -134,7 +134,7 @@ impl DesktopEntry {
         if self.terminal && !config.terminal_output {
             let term_cmd = config.terminal()?;
             exec = shlex::split(&term_cmd)
-                .ok_or_else(|| Error::BadCmd(term_cmd))?
+                .ok_or(Error::BadCmd(term_cmd))?
                 .into_iter()
                 .chain(exec)
                 .collect();
