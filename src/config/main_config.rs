@@ -572,7 +572,9 @@ mod tests {
 
         config.add_handler(
             &Mime::from_str("x-scheme-handler/terminal")?,
-            &DesktopHandler::from_str("tests/org.wezfurlong.wezterm.desktop")?,
+            &DesktopHandler::from_str(
+                "tests/assets/org.wezfurlong.wezterm.desktop",
+            )?,
         )?;
 
         assert_eq!(config.terminal()?, "wezterm start --cwd . -e");
@@ -587,7 +589,7 @@ mod tests {
         config
             .system_apps
             .add_unassociated(DesktopHandler::from_str(
-                "tests/org.wezfurlong.wezterm.desktop",
+                "tests/assets/org.wezfurlong.wezterm.desktop",
             )?);
 
         assert_eq!(config.terminal()?, "wezterm start --cwd . -e");
@@ -608,13 +610,15 @@ mod tests {
         // Use actual desktop file because command may be needed
         config.add_handler(
             &mime::TEXT_PLAIN,
-            &DesktopHandler::from_str("tests/Helix.desktop")?,
+            &DesktopHandler::from_str("tests/assets/Helix.desktop")?,
         )?;
 
         // May be needed if terminal command is needed
         config.add_handler(
             &Mime::from_str("x-scheme-handler/terminal")?,
-            &DesktopHandler::from_str("tests/org.wezfurlong.wezterm.desktop")?,
+            &DesktopHandler::from_str(
+                "tests/assets/org.wezfurlong.wezterm.desktop",
+            )?,
         )?;
 
         config.show_handler(writer, &mime::TEXT_PLAIN, output_json)?;
@@ -623,7 +627,7 @@ mod tests {
     }
 
     #[test]
-    // NOTE: result will begin with tests/, which is normal ONLY for tests
+    // NOTE: result will begin with tests/assets/, which is normal ONLY for tests
     fn show_handler() -> Result<()> {
         let mut buffer = Vec::new();
         test_show_handler(&mut buffer, false, false)?;

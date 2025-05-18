@@ -103,38 +103,42 @@ mod tests {
             "inode/directory"
         );
         assert_eq!(
-            MimeType::try_from(Path::new("./tests/rust.vim"))?.0,
+            MimeType::try_from(Path::new("./tests/assets/rust.vim"))?.0,
             "text/plain"
         );
         assert_eq!(
-            MimeType::try_from(Path::new("./tests/cat"))?.0,
+            MimeType::try_from(Path::new("./tests/assets/cat"))?.0,
             "application/x-shellscript"
         );
         assert_eq!(
             MimeType::try_from(Path::new(
-                "./tests/SettingsWidgetFdoSecrets.ui"
+                "./tests/assets/SettingsWidgetFdoSecrets.ui"
             ))?
             .0,
             "application/x-designer"
         );
         assert_eq!(
-            MimeType::try_from(Path::new("./tests/empty.txt"))?.0,
+            MimeType::try_from(Path::new("./tests/assets/empty.txt"))?.0,
             "text/plain"
         );
         assert_eq!(
-            MimeType::try_from(Path::new("./tests/p.html"))?.0,
+            MimeType::try_from(Path::new("./tests/assets/p.html"))?.0,
             "text/html"
         );
         assert_eq!(
-            MimeType::try_from(Path::new("./tests/no_html_tags.html"))?.0,
+            MimeType::try_from(Path::new("./tests/assets/no_html_tags.html"))?
+                .0,
             "text/html"
         );
         assert_eq!(
-            MimeType::try_from(Path::new("./tests/empty"))?.0,
+            MimeType::try_from(Path::new("./tests/assets/empty"))?.0,
             "application/x-zerosize"
         );
         assert_eq!(
-            MimeType::try_from(Path::new("./tests/nonsense_binary_data"))?.0,
+            MimeType::try_from(Path::new(
+                "./tests/assets/nonsense_binary_data"
+            ))?
+            .0,
             "application/octet-stream"
         );
 
