@@ -409,24 +409,24 @@ mod tests {
 
     #[test]
     fn mimeapps_no_added_round_trip() -> Result<()> {
-        mimeapps_round_trip_simple("./tests/mimeapps_no_added.list")
+        mimeapps_round_trip_simple("./tests/assets/mimeapps_no_added.list")
     }
 
     #[test]
     fn mimeapps_no_default_round_trip() -> Result<()> {
-        mimeapps_round_trip_simple("./tests/mimeapps_no_default.list")
+        mimeapps_round_trip_simple("./tests/assets/mimeapps_no_default.list")
     }
 
     #[test]
     fn mimeapps_sorted_round_trip() -> Result<()> {
-        mimeapps_round_trip_simple("./tests/mimeapps_sorted.list")
+        mimeapps_round_trip_simple("./tests/assets/mimeapps_sorted.list")
     }
 
     #[test]
     fn mimeapps_anomalous_semicolons_round_trip() -> Result<()> {
         mimeapps_round_trip(
-            "./tests/mimeapps_anomalous_semicolons.list",
-            "./tests/mimeapps_sorted.list",
+            "./tests/assets/mimeapps_anomalous_semicolons.list",
+            "./tests/assets/mimeapps_sorted.list",
             noop,
         )
     }
@@ -434,15 +434,15 @@ mod tests {
     #[test]
     fn mimeapps_empty_entry_round_trip() -> Result<()> {
         mimeapps_round_trip(
-            "./tests/mimeapps_empty_entry.list",
-            "./tests/mimeapps_no_added.list",
+            "./tests/assets/mimeapps_empty_entry.list",
+            "./tests/assets/mimeapps_no_added.list",
             noop,
         )
     }
 
     #[test]
     fn mimeapps_empty_entry_fallback() -> Result<()> {
-        let file = File::open("./tests/mimeapps_empty_entry.list")?;
+        let file = File::open("./tests/assets/mimeapps_empty_entry.list")?;
         let mime_apps = MimeApps::read_from(file)?;
         let config_file = ConfigFile::default();
 
@@ -472,7 +472,7 @@ mod tests {
             Ok(())
         };
 
-        let path = "./tests/mimeapps_sorted.list";
+        let path = "./tests/assets/mimeapps_sorted.list";
 
         mimeapps_round_trip(path, path, remove_and_re_add)
     }
@@ -480,8 +480,8 @@ mod tests {
     #[test]
     fn mimeapps_duplicate_round_trip() -> Result<()> {
         mimeapps_round_trip(
-            "./tests/mimeapps_duplicate.list",
-            "./tests/mimeapps_no_added.list",
+            "./tests/assets/mimeapps_duplicate.list",
+            "./tests/assets/mimeapps_no_added.list",
             noop,
         )
     }

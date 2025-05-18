@@ -212,7 +212,7 @@ mod tests {
     fn complex_exec() -> Result<()> {
         // Note that this entry also has no category key
         let entry =
-            DesktopEntry::try_from(PathBuf::from("tests/cmus.desktop"))?;
+            DesktopEntry::try_from(PathBuf::from("tests/assets/cmus.desktop"))?;
         assert_eq!(entry.mime_type.len(), 2);
         assert_eq!(entry.mime_type[0].essence_str(), "audio/mp3");
         assert_eq!(entry.mime_type[1].essence_str(), "audio/ogg");
@@ -236,7 +236,7 @@ mod tests {
     #[test]
     fn terminal_emulator() -> Result<()> {
         let entry = DesktopEntry::try_from(PathBuf::from(
-            "tests/org.wezfurlong.wezterm.desktop",
+            "tests/assets/org.wezfurlong.wezterm.desktop",
         ))?;
         assert!(entry.mime_type.is_empty());
 
@@ -259,13 +259,15 @@ mod tests {
 
     #[test]
     fn invalid_desktop_entries() -> Result<()> {
-        let empty_name =
-            DesktopEntry::try_from(PathBuf::from("tests/empty_name.desktop"));
+        let empty_name = DesktopEntry::try_from(PathBuf::from(
+            "tests/assets/empty_name.desktop",
+        ));
 
         assert!(empty_name.is_err());
 
-        let empty_exec =
-            DesktopEntry::try_from(PathBuf::from("tests/empty_exec.desktop"));
+        let empty_exec = DesktopEntry::try_from(PathBuf::from(
+            "tests/assets/empty_exec.desktop",
+        ));
 
         assert!(empty_exec.is_err());
 
@@ -281,12 +283,13 @@ mod tests {
         config.add_handler(
             &Mime::from_str("x-scheme-handler/terminal")?,
             &DesktopHandler::assume_valid(
-                "tests/org.wezfurlong.wezterm.desktop".into(),
+                "tests/assets/org.wezfurlong.wezterm.desktop".into(),
             ),
         )?;
 
-        let entry =
-            DesktopEntry::try_from(PathBuf::from("tests/Helix.desktop"))?;
+        let entry = DesktopEntry::try_from(PathBuf::from(
+            "tests/assets/Helix.desktop",
+        ))?;
 
         let command = entry.get_cmd(&config, vec!["test.txt".to_string()])?;
 
