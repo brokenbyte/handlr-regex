@@ -28,6 +28,10 @@ pub struct Cli {
     /// Disable notifications on error
     #[clap(long = "disable-notifications", short = 'n', action = ArgAction::SetFalse)]
     pub enable_notifications: bool,
+
+    /// Overrides whether or not to behave as if the output is an interactive terminal
+    #[clap(long = "force-terminal-output", short = 't')]
+    pub terminal_output: Option<bool>,
 }
 
 #[deny(missing_docs)]

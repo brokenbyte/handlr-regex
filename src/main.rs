@@ -20,13 +20,13 @@ fn main() -> Result<()> {
         .completer("handlr")
         .complete();
 
-    let terminal_output = std::io::stdout().is_terminal();
-    let Cli {
-        command,
-        enable_notifications,
-    } = Cli::parse();
+    let cli = Cli::parse();
 
-    let show_notifications = !terminal_output && enable_notifications;
+    let terminal_output = cli
+        .terminal_output
+        .unwrap_or(std::io::stdout().is_terminal());
+
+    let show_notifications = !terminal_output && cli.enable_notifications;
 
     let mut config = notify_on_err(
         Config::new(terminal_output),
@@ -36,7 +36,7 @@ fn main() -> Result<()> {
 
     let mut stdout = std::io::stdout().lock();
 
-    let res = match command {
+    let res = match cli.command {
         Cmd::Set { mime, handler } => config.set_handler(&mime, &handler),
         Cmd::Add { mime, handler } => config.add_handler(&mime, &handler),
         Cmd::Launch {
