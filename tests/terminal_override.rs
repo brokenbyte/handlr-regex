@@ -1,11 +1,21 @@
 use insta_cmd::{assert_cmd_snapshot, get_cargo_bin};
 use std::process::Command;
-use test_case::test_matrix;
 
-#[test_matrix([true, false])]
-fn terminal_output_tests_direct(terminal_output: bool) {
-    assert_cmd_snapshot!(Command::new(get_cargo_bin("handlr"))
-        .arg(format!("--force-terminal-output={terminal_output}"))
+/// Helper function to test terminal output detection
+fn test_terminal_output(terminal_output: bool) -> Command {
+    let mut cmd = Command::new(get_cargo_bin("handlr"));
+    cmd.arg(format!("--force-terminal-output={}", terminal_output))
         .arg("mime")
-        .arg("./assets"))
+        .arg("./assets");
+    cmd
+}
+
+#[test]
+fn terminal_output_tests_force_true() {
+    assert_cmd_snapshot!(test_terminal_output(true))
+}
+
+#[test]
+fn terminal_output_tests_force_false() {
+    assert_cmd_snapshot!(test_terminal_output(false))
 }
