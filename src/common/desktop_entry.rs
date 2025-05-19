@@ -202,11 +202,26 @@ impl TryFrom<PathBuf> for DesktopEntry {
 
 #[cfg(test)]
 mod tests {
+    use super::*;
+    use crate::common::DesktopHandler;
     use similar_asserts::assert_eq;
 
-    use crate::common::DesktopHandler;
-
-    use super::*;
+    // Helper function to test getting the command from the Exec field
+    fn test_get_cmd(
+        entry: &DesktopEntry,
+        config: &Config,
+        expected_program: &str,
+        expected_args: Vec<&str>,
+    ) -> Result<()> {
+        assert_eq!(
+            entry.get_cmd(config, vec!["test".to_string()])?,
+            (
+                expected_program.to_string(),
+                expected_args.iter().map(|s| s.to_string()).collect()
+            )
+        );
+        Ok(())
+    }
 
     #[test]
     fn complex_exec() -> Result<()> {
@@ -216,21 +231,14 @@ mod tests {
         assert_eq!(entry.mime_type.len(), 2);
         assert_eq!(entry.mime_type[0].essence_str(), "audio/mp3");
         assert_eq!(entry.mime_type[1].essence_str(), "audio/ogg");
-
-        let config = Config::default();
-        let args = vec!["test".to_string()];
-        assert_eq!(entry.get_cmd(& config, args)?,
-            (
-                "bash".to_string(),
-                [
-                    "-c", 
-                    "(! pgrep cmus && tilix -e cmus && tilix -a session-add-down -e cava); sleep 0.1 && cmus-remote -q test"
-                ].iter().map(|s| s.to_string()).collect()
-            )
-        );
         assert!(!entry.is_terminal_emulator());
 
-        Ok(())
+        test_get_cmd(&entry, &Config::default(), "bash",
+                vec![
+                    "-c", 
+                    "(! pgrep cmus && tilix -e cmus && tilix -a session-add-down -e cava); sleep 0.1 && cmus-remote -q test"
+                ]
+        )
     }
 
     #[test]
@@ -239,22 +247,14 @@ mod tests {
             "tests/assets/org.wezfurlong.wezterm.desktop",
         ))?;
         assert!(entry.mime_type.is_empty());
-
-        let config = Config::default();
-        let args = vec!["test".to_string()];
-        assert_eq!(
-            entry.get_cmd(&config, args)?,
-            (
-                "wezterm".to_string(),
-                ["start", "--cwd", ".", "test"]
-                    .iter()
-                    .map(|s| s.to_string())
-                    .collect()
-            )
-        );
         assert!(entry.is_terminal_emulator());
 
-        Ok(())
+        test_get_cmd(
+            &entry,
+            &Config::default(),
+            "wezterm",
+            vec!["start", "--cwd", ".", "test"],
+        )
     }
 
     #[test]
@@ -291,19 +291,11 @@ mod tests {
             "tests/assets/Helix.desktop",
         ))?;
 
-        let command = entry.get_cmd(&config, vec!["test.txt".to_string()])?;
-
-        assert_eq!(
-            command,
-            (
-                "wezterm".to_string(),
-                ["start", "--cwd", ".", "-e", "hx", "test.txt"]
-                    .iter()
-                    .map(|s| s.to_string())
-                    .collect()
-            )
-        );
-
-        Ok(())
+        test_get_cmd(
+            &entry,
+            &config,
+            "wezterm",
+            vec!["start", "--cwd", ".", "-e", "hx", "test"],
+        )
     }
 }
