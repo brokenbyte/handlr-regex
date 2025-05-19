@@ -109,7 +109,7 @@ impl DesktopEntry {
                 .into_iter()
                 .flat_map(|s| match s.as_str() {
                     "%f" | "%F" | "%u" | "%U" => args.clone(),
-                    s if special.is_match(s) => vec![{
+                    s => vec![{
                         let mut replaced =
                             String::with_capacity(s.len() + args.len() * 2);
                         special.replace_all_with(
@@ -122,7 +122,6 @@ impl DesktopEntry {
                         );
                         replaced
                     }],
-                    _ => vec![s],
                 })
                 .collect()
         } else {
