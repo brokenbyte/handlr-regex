@@ -124,6 +124,13 @@ mod tests {
     }
 
     #[test]
+    fn file_url() -> Result<()> {
+        let path = UserPath::from_str("file:///test.txt")?;
+        assert_eq!(path.to_string(), "/test.txt");
+        Ok(())
+    }
+
+    #[test]
     fn mime_table_terminal() -> Result<()> {
         let mut buffer = Vec::new();
         mime_table(&mut buffer, &paths()?, false, true)?;

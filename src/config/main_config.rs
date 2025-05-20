@@ -47,6 +47,7 @@ impl Config {
     }
 
     /// Get the handler associated with a given mime
+    #[mutants::skip] // Cannot test match guard because it relies on user interactivity
     pub fn get_handler(&self, mime: &Mime) -> Result<DesktopHandler> {
         match self.mime_apps.get_handler_from_user(mime, &self.config) {
             Err(e) if matches!(e, Error::Cancelled) => Err(e),

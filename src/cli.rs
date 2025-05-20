@@ -1,5 +1,3 @@
-use std::fmt::Write;
-
 use crate::{
     apps::SystemApps,
     common::{mime_types, DesktopHandler, MimeOrExtension, UserPath},
@@ -9,6 +7,7 @@ use clap_complete::{
     engine::{ArgValueCompleter, CompletionCandidate},
     PathCompleter,
 };
+use std::{ffi::OsStr, fmt::Write};
 
 /// A better xdg-utils
 ///
@@ -256,8 +255,7 @@ pub struct SelectorArgs {
 }
 
 /// Generate candidates for mimes and file extensions to use
-#[mutants::skip] // TODO: figure out how to test with golden tests
-fn autocomplete_mimes(current: &std::ffi::OsStr) -> Vec<CompletionCandidate> {
+fn autocomplete_mimes(current: &OsStr) -> Vec<CompletionCandidate> {
     let mut mimes = mime_db::EXTENSIONS
         .iter()
         .map(|(ext, _)| format!(".{ext}"))
@@ -271,9 +269,7 @@ fn autocomplete_mimes(current: &std::ffi::OsStr) -> Vec<CompletionCandidate> {
 
 /// Generate candidates for desktop files
 #[mutants::skip] // Cannot test directly, relies on system state
-fn autocomplete_desktop_files(
-    current: &std::ffi::OsStr,
-) -> Vec<CompletionCandidate> {
+fn autocomplete_desktop_files(current: &OsStr) -> Vec<CompletionCandidate> {
     SystemApps::get_entries()
         .expect("Could not get system desktop entries")
         .filter(|(path, _)| {
@@ -287,4 +283,14 @@ fn autocomplete_desktop_files(
             CompletionCandidate::new(path).help(Some(name))
         })
         .collect()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_autocomplete_mimes() {
+        insta::assert_debug_snapshot!(autocomplete_mimes(OsStr::new("")));
+    }
 }
