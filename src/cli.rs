@@ -25,11 +25,11 @@ pub struct Cli {
     pub command: Cmd,
 
     /// Disable notifications on error
-    #[clap(long = "disable-notifications", short = 'n', action = ArgAction::SetFalse)]
+    #[clap(global = true, long = "disable-notifications", short = 'n', action = ArgAction::SetFalse)]
     pub enable_notifications: bool,
 
     /// Overrides whether or not to behave as if the output is an interactive terminal
-    #[clap(long = "force-terminal-output", short = 't')]
+    #[clap(global = true, long = "force-terminal-output", short = 't')]
     pub terminal_output: Option<bool>,
 }
 
