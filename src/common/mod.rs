@@ -10,6 +10,6 @@ pub use desktop_entry::{DesktopEntry, Mode as ExecMode};
 pub use handler::{
     DesktopHandler, Handleable, Handler, RegexApps, RegexHandler,
 };
-pub use mime_types::{MimeOrExtension, MimeType};
+pub use mime_types::MimeType;
 pub use path::{mime_table, UserPath};
 pub use table::render_table;

@@ -5,7 +5,7 @@ use std::{convert::TryFrom, path::Path, str::FromStr};
 use url::Url;
 
 /// A mime derived from a path or URL
-#[derive(Debug, Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Debug, Clone, Hash, PartialEq, Eq, PartialOrd, Ord, Deref)]
 pub struct MimeType(pub Mime);
 
 impl MimeType {
@@ -58,15 +58,11 @@ impl TryFrom<&Path> for MimeType {
     }
 }
 
-/// Mime derived from user input: extension (e.g. .pdf) or type (e.g. image/jpg)
-#[derive(Debug, Clone, Deref)]
-pub struct MimeOrExtension(pub Mime);
-
-impl FromStr for MimeOrExtension {
+impl FromStr for MimeType {
     type Err = Error;
     fn from_str(s: &str) -> Result<Self> {
         let mime = if s.starts_with('.') {
-            MimeType::from_ext(s)?
+            Self::from_ext(s)?
         } else {
             match Mime::from_str(s)? {
                 m if m.subtype() == "" => return Err(Error::InvalidMime(m)),
@@ -84,14 +80,11 @@ mod tests {
 
     #[test]
     fn user_input() -> Result<()> {
-        assert_eq!(MimeOrExtension::from_str(".pdf")?.0, mime::APPLICATION_PDF);
-        assert_eq!(
-            MimeOrExtension::from_str("image/jpeg")?.0,
-            mime::IMAGE_JPEG
-        );
+        assert_eq!(MimeType::from_str(".pdf")?.0, mime::APPLICATION_PDF);
+        assert_eq!(MimeType::from_str("image/jpeg")?.0, mime::IMAGE_JPEG);
 
-        assert!("image//jpg".parse::<MimeOrExtension>().is_err());
-        assert!("image".parse::<MimeOrExtension>().is_err());
+        assert!("image//jpg".parse::<MimeType>().is_err());
+        assert!("image".parse::<MimeType>().is_err());
 
         Ok(())
     }
@@ -147,12 +140,12 @@ mod tests {
 
     #[test]
     fn from_str() -> Result<()> {
-        assert_eq!(".mp3".parse::<MimeOrExtension>()?.0, "audio/mpeg");
-        assert_eq!("audio/mpeg".parse::<MimeOrExtension>()?.0, "audio/mpeg");
-        assert!(".".parse::<MimeOrExtension>().is_err());
-        assert!("audio/".parse::<MimeOrExtension>().is_err());
+        assert_eq!(".mp3".parse::<MimeType>()?.0, "audio/mpeg");
+        assert_eq!("audio/mpeg".parse::<MimeType>()?.0, "audio/mpeg");
+        assert!(".".parse::<MimeType>().is_err());
+        assert!("audio/".parse::<MimeType>().is_err());
         assert_eq!(
-            "application/octet-stream".parse::<MimeOrExtension>()?.0,
+            "application/octet-stream".parse::<MimeType>()?.0,
             "application/octet-stream"
         );
 

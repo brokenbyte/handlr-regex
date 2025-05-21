@@ -3,7 +3,7 @@
 // because they rely on their own dependencies and so on
 
 pub type DesktopHandler = String;
-pub type MimeOrExtension = String;
+pub type MimeType = String;
 pub type UserPath = String;
 
 pub fn mime_types() -> Vec<String> {

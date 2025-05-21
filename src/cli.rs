@@ -1,6 +1,6 @@
 use crate::{
     apps::SystemApps,
-    common::{mime_types, DesktopHandler, MimeOrExtension, UserPath},
+    common::{mime_types, DesktopHandler, MimeType, UserPath},
 };
 use clap::{builder::StyledStr, ArgAction, Args, Parser, Subcommand};
 use clap_complete::{
@@ -110,7 +110,7 @@ pub enum Cmd {
     Set {
         /// Mimetype or file extension to operate on.
         #[clap(add = ArgValueCompleter::new(autocomplete_mimes))]
-        mime: MimeOrExtension,
+        mime: MimeType,
         /// Desktop file of handler program
         #[clap(add = ArgValueCompleter::new(autocomplete_desktop_files))]
         handler: DesktopHandler,
@@ -127,7 +127,7 @@ pub enum Cmd {
     Unset {
         /// Mimetype or file extension to unset the default handler of
         #[clap(add = ArgValueCompleter::new(autocomplete_mimes))]
-        mime: MimeOrExtension,
+        mime: MimeType,
     },
 
     /// Launch the handler for specified extension/mime with optional arguments
@@ -140,7 +140,7 @@ pub enum Cmd {
     Launch {
         /// Mimetype or file extension to launch the handler of
         #[clap(add = ArgValueCompleter::new(autocomplete_mimes))]
-        mime: MimeOrExtension,
+        mime: MimeType,
         /// Arguments to pass to handler program
         // Not necessarily a path, but completing as a path tends to be the expected "default" behavior
         #[clap(add=ArgValueCompleter::new(PathCompleter::any()))]
@@ -174,7 +174,7 @@ pub enum Cmd {
         json: bool,
         /// Mimetype to get the handler of
         #[clap(add = ArgValueCompleter::new(autocomplete_mimes))]
-        mime: MimeOrExtension,
+        mime: MimeType,
         #[command(flatten)]
         selector_args: SelectorArgs,
     },
@@ -191,7 +191,7 @@ pub enum Cmd {
     Add {
         /// Mimetype to add handler to
         #[clap(add = ArgValueCompleter::new(autocomplete_mimes))]
-        mime: MimeOrExtension,
+        mime: MimeType,
         /// Desktop file of handler program
         #[clap(add = ArgValueCompleter::new(autocomplete_desktop_files))]
         handler: DesktopHandler,
@@ -206,7 +206,7 @@ pub enum Cmd {
     Remove {
         /// Mimetype to remove handler from
         #[clap(add = ArgValueCompleter::new(autocomplete_mimes))]
-        mime: MimeOrExtension,
+        mime: MimeType,
         /// Desktop file of handler program to remove
         #[clap(add = ArgValueCompleter::new(autocomplete_desktop_files))]
         handler: DesktopHandler,
