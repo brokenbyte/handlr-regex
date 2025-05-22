@@ -15,7 +15,8 @@ use clap::{CommandFactory, Parser};
 use clap_complete::CompleteEnv;
 
 #[mutants::skip] // Cannot test directly at the moment
-fn main() -> Result<()> {
+fn main() {
+    // Shell completions
     CompleteEnv::with_factory(|| Cli::command().name("handlr"))
         .completer("handlr")
         .complete();
@@ -28,15 +29,29 @@ fn main() -> Result<()> {
 
     let show_notifications = !terminal_output && cli.enable_notifications;
 
-    let mut config = notify_on_err(
-        Config::new(terminal_output),
-        "handlr config error",
-        show_notifications,
-    )?;
+    if let Err(e) = run(cli, terminal_output) {
+        if show_notifications {
+            std::process::Command::new("notify-send")
+                .args([
+                    "--expire-time=10000",
+                    "--icon=dialog-error",
+                    &e.to_string(),
+                ])
+                .spawn()
+                .and_then(|mut c| c.wait())
+                .expect("handlr: could not run `notify-send`");
+        }
+    }
+}
+
+/// Run main program logic
+#[mutants::skip] // Cannot test directly at the moment
+fn run(cli: Cli, terminal_output: bool) -> Result<()> {
+    let mut config = Config::new(terminal_output)?;
 
     let mut stdout = std::io::stdout().lock();
 
-    let res = match cli.command {
+    match cli.command {
         Cmd::Set { mime, handler } => config.set_handler(&mime, &handler),
         Cmd::Add { mime, handler } => config.add_handler(&mime, &handler),
         Cmd::Launch {
@@ -68,34 +83,5 @@ fn main() -> Result<()> {
         Cmd::List { all, json } => config.print(&mut stdout, all, json),
         Cmd::Unset { mime } => config.unset_handler(&mime),
         Cmd::Remove { mime, handler } => config.remove_handler(&mime, &handler),
-    };
-
-    notify_on_err(
-        res,
-        "handlr error",
-        show_notifications && config.config.enable_notifications,
-    )
-}
-
-/// Issue a notification if given an error and not running in a terminal
-#[mutants::skip] // Cannot test directly, runs external command
-pub fn notify_on_err<T>(
-    res: Result<T>,
-    title: &str,
-    show_notifications: bool,
-) -> Result<T> {
-    if show_notifications {
-        if let Err(ref e) = res {
-            std::process::Command::new("notify-send")
-                .args([
-                    "--expire-time=10000",
-                    "--icon=dialog-error",
-                    title,
-                    &e.to_string(),
-                ])
-                .spawn()?;
-        }
     }
-
-    res
 }
