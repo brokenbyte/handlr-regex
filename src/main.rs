@@ -13,6 +13,13 @@ use error::Result;
 
 use clap::{CommandFactory, Parser};
 use clap_complete::CompleteEnv;
+use tracing::level_filters::LevelFilter;
+use tracing_appender::non_blocking::WorkerGuard;
+use tracing_subscriber::{
+    fmt::{self},
+    layer::SubscriberExt,
+    EnvFilter, Layer,
+};
 
 #[mutants::skip] // Cannot test directly at the moment
 fn main() {
@@ -22,6 +29,9 @@ fn main() {
         .complete();
 
     let cli = Cli::parse();
+
+    let _guard = init_tracing()
+        .expect("handlr: could not initialize global tracing subscriber");
 
     let terminal_output = cli
         .terminal_output
@@ -42,6 +52,32 @@ fn main() {
                 .expect("handlr: could not run `notify-send`");
         }
     }
+}
+
+/// Init global tracing subscriber
+fn init_tracing() -> Result<WorkerGuard> {
+    let (file_writer, _guard) =
+        tracing_appender::non_blocking(tracing_appender::rolling::never(
+            xdg::BaseDirectories::new()?.create_cache_directory("handlr")?,
+            "handlr.log",
+        ));
+
+    tracing::subscriber::set_global_default(
+        tracing_subscriber::registry()
+            .with(
+                fmt::Layer::new()
+                    .pretty()
+                    .with_writer(std::io::stderr)
+                    .with_filter(
+                        EnvFilter::builder()
+                            .with_default_directive(LevelFilter::WARN.into())
+                            .from_env_lossy(),
+                    ),
+            )
+            .with(fmt::Layer::new().with_writer(file_writer)),
+    )?;
+
+    Ok(_guard)
 }
 
 /// Run main program logic

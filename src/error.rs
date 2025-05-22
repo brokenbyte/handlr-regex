@@ -39,6 +39,8 @@ pub enum Error {
     BadExec(String, String),
     #[error("Could not split command '{0}' into shell words")]
     BadCmd(String),
+    #[error(transparent)]
+    TracingGlobalDefault(#[from] tracing::dispatcher::SetGlobalDefaultError),
     #[cfg(test)]
     #[error(transparent)]
     BadUrl(#[from] url::ParseError),
