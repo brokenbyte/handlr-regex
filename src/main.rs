@@ -15,11 +15,8 @@ use clap::{CommandFactory, Parser};
 use clap_complete::CompleteEnv;
 use tracing::level_filters::LevelFilter;
 use tracing_appender::non_blocking::WorkerGuard;
-use tracing_subscriber::{
-    fmt::{self},
-    layer::SubscriberExt,
-    EnvFilter, Layer,
-};
+use tracing_subscriber::{fmt, layer::SubscriberExt, EnvFilter, Layer};
+use tracing_unwrap::ResultExt;
 
 #[mutants::skip] // Cannot test directly at the moment
 fn main() {
@@ -31,7 +28,7 @@ fn main() {
     let cli = Cli::parse();
 
     let _guard = init_tracing()
-        .expect("handlr: could not initialize global tracing subscriber");
+        .expect("handlr error: Could not initialize global tracing subscriber");
 
     let terminal_output = cli
         .terminal_output
@@ -49,7 +46,7 @@ fn main() {
                 ])
                 .spawn()
                 .and_then(|mut c| c.wait())
-                .expect("handlr: could not run `notify-send`");
+                .expect_or_log("Could not run `notify-send`");
         }
     }
 }

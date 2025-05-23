@@ -271,7 +271,7 @@ fn autocomplete_mimes(current: &OsStr) -> Vec<CompletionCandidate> {
 #[mutants::skip] // Cannot test directly, relies on system state
 fn autocomplete_desktop_files(current: &OsStr) -> Vec<CompletionCandidate> {
     SystemApps::get_entries()
-        .expect("Could not get system desktop entries")
+        .expect("handlr error: Could not get system desktop entries")
         .filter(|(path, _)| {
             path.to_string_lossy()
                 .starts_with(current.to_string_lossy().as_ref())
@@ -279,7 +279,7 @@ fn autocomplete_desktop_files(current: &OsStr) -> Vec<CompletionCandidate> {
         .map(|(path, entry)| {
             let mut name = StyledStr::new();
             write!(name, "{}", entry.name)
-                .expect("Could not write desktop entry name");
+                .expect("handlr error: Could not write desktop entry name");
             CompletionCandidate::new(path).help(Some(name))
         })
         .collect()
