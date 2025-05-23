@@ -1,13 +1,13 @@
 use std::collections::BTreeMap;
 
-use tracing::{field::Visit, level_filters::LevelFilter};
+use tracing::field::Visit;
 use tracing_appender::non_blocking::WorkerGuard;
 use tracing_subscriber::{fmt, layer::SubscriberExt, EnvFilter, Layer};
 
-use crate::error::Result;
+use crate::{cli::Cli, error::Result};
 
 /// Init global tracing subscriber
-pub fn init_tracing(show_notifications: bool) -> Result<WorkerGuard> {
+pub fn init_tracing(cli: &Cli) -> Result<WorkerGuard> {
     let (file_writer, _guard) =
         tracing_appender::non_blocking(tracing_appender::rolling::never(
             xdg::BaseDirectories::new()?.create_cache_directory("handlr")?,
@@ -16,7 +16,7 @@ pub fn init_tracing(show_notifications: bool) -> Result<WorkerGuard> {
 
     let env_filter = || {
         EnvFilter::builder()
-            .with_default_directive(LevelFilter::WARN.into())
+            .with_default_directive(cli.verbosity.tracing_level_filter().into())
             .from_env_lossy()
     };
 
@@ -30,7 +30,7 @@ pub fn init_tracing(show_notifications: bool) -> Result<WorkerGuard> {
             )
             .with(fmt::Layer::new().with_writer(file_writer))
             .with(
-                show_notifications
+                cli.show_notifications()
                     .then_some(NotificationLayer.with_filter(env_filter())),
             ),
     )?;

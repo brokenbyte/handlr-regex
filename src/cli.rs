@@ -7,6 +7,7 @@ use clap_complete::{
     engine::{ArgValueCompleter, CompletionCandidate},
     PathCompleter,
 };
+use clap_verbosity_flag::{Verbosity, WarnLevel};
 use std::{ffi::OsStr, fmt::Write, io::IsTerminal};
 
 /// A better xdg-utils
@@ -31,6 +32,9 @@ pub struct Cli {
     /// Overrides whether or not to behave as if the output is an interactive terminal
     #[clap(global = true, long = "force-terminal-output", short = 't')]
     terminal_output: Option<bool>,
+
+    #[command(flatten)]
+    pub verbosity: Verbosity<WarnLevel>,
 }
 
 #[allow(dead_code)] // These are left unused in the build script that includes this
@@ -41,7 +45,7 @@ impl Cli {
     }
 
     pub fn show_notifications(&self) -> bool {
-        self.terminal_output() && self.enable_notifications
+        !self.terminal_output() && self.enable_notifications
     }
 }
 

@@ -23,7 +23,7 @@ fn main() {
 
     let cli = Cli::parse();
 
-    let _guard = init_tracing(cli.show_notifications())
+    let _guard = init_tracing(&cli)
         .expect("handlr error: Could not initialize global tracing subscriber");
 
     if let Err(e) = run(cli) {
