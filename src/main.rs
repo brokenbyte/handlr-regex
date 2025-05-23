@@ -3,6 +3,7 @@ mod cli;
 mod common;
 mod config;
 mod error;
+mod logging;
 
 use std::io::IsTerminal;
 
@@ -10,13 +11,10 @@ use cli::{Cli, Cmd};
 use common::mime_table;
 use config::Config;
 use error::Result;
+use logging::init_tracing;
 
 use clap::{CommandFactory, Parser};
 use clap_complete::CompleteEnv;
-use tracing::level_filters::LevelFilter;
-use tracing_appender::non_blocking::WorkerGuard;
-use tracing_subscriber::{fmt, layer::SubscriberExt, EnvFilter, Layer};
-use tracing_unwrap::ResultExt;
 
 #[mutants::skip] // Cannot test directly at the moment
 fn main() {
@@ -27,54 +25,16 @@ fn main() {
 
     let cli = Cli::parse();
 
-    let _guard = init_tracing()
-        .expect("handlr error: Could not initialize global tracing subscriber");
-
     let terminal_output = cli
         .terminal_output
         .unwrap_or(std::io::stdout().is_terminal());
 
-    let show_notifications = !terminal_output && cli.enable_notifications;
+    let _guard = init_tracing(!terminal_output && cli.enable_notifications)
+        .expect("handlr error: Could not initialize global tracing subscriber");
 
     if let Err(e) = run(cli, terminal_output) {
-        if show_notifications {
-            std::process::Command::new("notify-send")
-                .args([
-                    "--expire-time=10000",
-                    "--icon=dialog-error",
-                    &e.to_string(),
-                ])
-                .spawn()
-                .and_then(|mut c| c.wait())
-                .expect_or_log("Could not run `notify-send`");
-        }
+        tracing::error!("{}", e)
     }
-}
-
-/// Init global tracing subscriber
-fn init_tracing() -> Result<WorkerGuard> {
-    let (file_writer, _guard) =
-        tracing_appender::non_blocking(tracing_appender::rolling::never(
-            xdg::BaseDirectories::new()?.create_cache_directory("handlr")?,
-            "handlr.log",
-        ));
-
-    tracing::subscriber::set_global_default(
-        tracing_subscriber::registry()
-            .with(
-                fmt::Layer::new()
-                    .pretty()
-                    .with_writer(std::io::stderr)
-                    .with_filter(
-                        EnvFilter::builder()
-                            .with_default_directive(LevelFilter::WARN.into())
-                            .from_env_lossy(),
-                    ),
-            )
-            .with(fmt::Layer::new().with_writer(file_writer)),
-    )?;
-
-    Ok(_guard)
 }
 
 /// Run main program logic
