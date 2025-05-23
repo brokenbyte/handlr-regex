@@ -5,8 +5,6 @@ mod config;
 mod error;
 mod logging;
 
-use std::io::IsTerminal;
-
 use cli::{Cli, Cmd};
 use common::mime_table;
 use config::Config;
@@ -25,22 +23,18 @@ fn main() {
 
     let cli = Cli::parse();
 
-    let terminal_output = cli
-        .terminal_output
-        .unwrap_or(std::io::stdout().is_terminal());
-
-    let _guard = init_tracing(!terminal_output && cli.enable_notifications)
+    let _guard = init_tracing(cli.show_notifications())
         .expect("handlr error: Could not initialize global tracing subscriber");
 
-    if let Err(e) = run(cli, terminal_output) {
+    if let Err(e) = run(cli) {
         tracing::error!("{}", e)
     }
 }
 
 /// Run main program logic
 #[mutants::skip] // Cannot test directly at the moment
-fn run(cli: Cli, terminal_output: bool) -> Result<()> {
-    let mut config = Config::new(terminal_output)?;
+fn run(cli: Cli) -> Result<()> {
+    let mut config = Config::new(cli.terminal_output())?;
 
     let mut stdout = std::io::stdout().lock();
 

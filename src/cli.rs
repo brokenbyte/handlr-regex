@@ -7,7 +7,7 @@ use clap_complete::{
     engine::{ArgValueCompleter, CompletionCandidate},
     PathCompleter,
 };
-use std::{ffi::OsStr, fmt::Write};
+use std::{ffi::OsStr, fmt::Write, io::IsTerminal};
 
 /// A better xdg-utils
 ///
@@ -26,11 +26,23 @@ pub struct Cli {
 
     /// Disable notifications on error
     #[clap(global = true, long = "disable-notifications", short = 'n', action = ArgAction::SetFalse)]
-    pub enable_notifications: bool,
+    enable_notifications: bool,
 
     /// Overrides whether or not to behave as if the output is an interactive terminal
     #[clap(global = true, long = "force-terminal-output", short = 't')]
-    pub terminal_output: Option<bool>,
+    terminal_output: Option<bool>,
+}
+
+#[allow(dead_code)] // These are left unused in the build script that includes this
+impl Cli {
+    pub fn terminal_output(&self) -> bool {
+        self.terminal_output
+            .unwrap_or(std::io::stdout().is_terminal())
+    }
+
+    pub fn show_notifications(&self) -> bool {
+        self.terminal_output() && self.enable_notifications
+    }
 }
 
 #[deny(missing_docs)]
