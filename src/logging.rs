@@ -1,9 +1,9 @@
 use std::collections::BTreeMap;
 
 use notify_rust::{Notification, Timeout, Urgency};
-use tracing::field::Visit;
+use tracing::{field::Visit, Level};
 use tracing_appender::non_blocking::WorkerGuard;
-use tracing_subscriber::{fmt, layer::SubscriberExt, EnvFilter, Layer};
+use tracing_subscriber::{filter, fmt, layer::SubscriberExt, EnvFilter, Layer};
 
 use crate::{cli::Cli, error::Result};
 
@@ -15,6 +15,7 @@ pub fn init_tracing(cli: &Cli) -> Result<WorkerGuard> {
             "handlr.log",
         ));
 
+    // Have log level for certain layers be determined by cli arguments
     let env_filter = || {
         EnvFilter::builder()
             .with_default_directive(cli.verbosity.tracing_level_filter().into())
@@ -23,16 +24,25 @@ pub fn init_tracing(cli: &Cli) -> Result<WorkerGuard> {
 
     tracing::subscriber::set_global_default(
         tracing_subscriber::registry()
+            // Send logs to stdout as determined by cli args
             .with(
                 fmt::Layer::new()
                     .pretty()
                     .with_writer(std::io::stderr)
                     .with_filter(env_filter()),
             )
+            // Send all logs to a log file
             .with(fmt::Layer::new().with_writer(file_writer))
+            // Notify for logs as determined by cli args
             .with(
                 cli.show_notifications()
                     .then_some(NotificationLayer.with_filter(env_filter())),
+            )
+            // Filter out all logs from other crates so the user is not overwhelmed looking at the logs
+            .with(
+                filter::Targets::new()
+                    .with_target("handlr", Level::TRACE)
+                    .with_target("tracing_unwrap", Level::WARN),
             ),
     )?;
 
