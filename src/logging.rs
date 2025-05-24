@@ -1,5 +1,3 @@
-use std::collections::BTreeMap;
-
 use notify_rust::{Notification, Timeout, Urgency};
 use tracing::{field::Visit, Level};
 use tracing_appender::non_blocking::WorkerGuard;
@@ -61,12 +59,14 @@ where
         event: &tracing::Event,
         _ctx: tracing_subscriber::layer::Context<'_, S>,
     ) {
-        let mut fields = BTreeMap::new();
-        let mut visitor = NotificationVisitor(&mut fields);
-        event.record(&mut visitor);
-        let message = fields
-            .get("message")
-            .expect("handlr error: Tracing event did not have any message");
+        let mut message = String::new();
+        event.record(&mut NotificationVisitor(&mut message));
+
+        // Just in case a message has no message, but some other information
+        if message.is_empty() {
+            message = "No message, see ~/.cache/handlr/handlr.log for details"
+                .to_string()
+        }
 
         let (level, icon, urgency) = match *event.metadata().level() {
             tracing::Level::ERROR => {
@@ -84,7 +84,7 @@ where
 
         Notification::new()
             .summary(&format!("handlr {}", level))
-            .body(message)
+            .body(&message)
             .icon(icon)
             .appname("handlr")
             .timeout(Timeout::Milliseconds(10_000))
@@ -94,7 +94,7 @@ where
     }
 }
 
-struct NotificationVisitor<'a>(&'a mut BTreeMap<String, String>);
+struct NotificationVisitor<'a>(&'a mut String);
 
 impl Visit for NotificationVisitor<'_> {
     fn record_debug(
@@ -102,7 +102,8 @@ impl Visit for NotificationVisitor<'_> {
         field: &tracing::field::Field,
         value: &dyn std::fmt::Debug,
     ) {
-        self.0
-            .insert(field.name().to_string(), format!("{:?}", value));
+        if field.name() == "message" {
+            self.0.push_str(&format!("{:?}", value));
+        }
     }
 }
