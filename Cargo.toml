@@ -39,6 +39,7 @@ tracing-subscriber = { version = "0.3.19", features = ["env-filter"] }
 tracing-appender = "0.2.3"
 tracing-unwrap = "1.0.1"
 clap-verbosity-flag = { version = "3.0.3", default-features = false, features = ["tracing"] }
+notify-rust = "4.11.7"
 
 [[bin]]
 name = "handlr"
