@@ -30,7 +30,7 @@ pub fn init_tracing(cli: &Cli) -> Result<WorkerGuard> {
                     .with_filter(env_filter()),
             )
             // Send all logs to a log file
-            .with(fmt::Layer::new().with_writer(file_writer))
+            .with(fmt::Layer::new().with_writer(file_writer).with_ansi(false))
             // Notify for logs as determined by cli args
             .with(
                 cli.show_notifications()
