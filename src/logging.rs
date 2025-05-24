@@ -1,5 +1,6 @@
 use std::collections::BTreeMap;
 
+use notify_rust::{Notification, Timeout, Urgency};
 use tracing::field::Visit;
 use tracing_appender::non_blocking::WorkerGuard;
 use tracing_subscriber::{fmt, layer::SubscriberExt, EnvFilter, Layer};
@@ -57,31 +58,29 @@ where
             .get("message")
             .expect("handlr error: Tracing event did not have any message");
 
-        let (level, icon, urgency, timeout) = match *event.metadata().level() {
-            l if l == tracing::Level::ERROR => {
-                ("error".to_string(), "dialog-error", "critical", 0)
+        let (level, icon, urgency) = match *event.metadata().level() {
+            tracing::Level::ERROR => {
+                ("error".to_string(), "dialog-error", Urgency::Critical)
             }
             tracing::Level::WARN => {
-                ("warning".to_string(), "dialog-warning", "normal", 10000)
+                ("warning".to_string(), "dialog-warning", Urgency::Normal)
             }
             l => (
                 l.as_str().to_lowercase(),
                 "dialog-information",
-                "low",
-                10000,
+                Urgency::Low,
             ),
         };
 
-        std::process::Command::new("notify-send")
-            .arg("--app-name=handlr")
-            .arg(format!("--expire-time={}", timeout))
-            .arg(format!("--icon={}", icon))
-            .arg(format!("handlr {}", level))
-            .arg(format!("--urgency={}", urgency))
-            .arg(message)
-            .spawn()
-            .and_then(|mut c| c.wait())
-            .expect("handlr error: Could not run `notify-send`");
+        Notification::new()
+            .summary(&format!("handlr {}", level))
+            .body(message)
+            .icon(icon)
+            .appname("handlr")
+            .timeout(Timeout::Milliseconds(10_000))
+            .urgency(urgency)
+            .show()
+            .expect("handlr error: Could not issue dbus notification");
     }
 }
 
