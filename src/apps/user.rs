@@ -77,6 +77,9 @@ impl MimeApps {
         handler: &DesktopHandler,
         expand_wildcards: bool,
     ) -> Result<()> {
+        // Warn the user if the given handler does not exist
+        handler.warn_if_invalid();
+
         if expand_wildcards {
             let wildcard = WildMatch::new(mime.as_ref());
             mime_types()
@@ -105,6 +108,9 @@ impl MimeApps {
         handler: &DesktopHandler,
         expand_wildcards: bool,
     ) -> Result<()> {
+        // Warn the user if the given handler does not exist
+        handler.warn_if_invalid();
+
         if expand_wildcards {
             let wildcard = WildMatch::new(mime.as_ref());
             mime_types()

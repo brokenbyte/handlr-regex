@@ -14,6 +14,7 @@ use std::{
     path::PathBuf,
     str::FromStr,
 };
+use tracing::warn;
 
 /// Represents a program or command that is used to open a file
 #[enum_dispatch(Handleable)]
@@ -93,6 +94,13 @@ impl DesktopHandler {
     #[mutants::skip] // Cannot test directly, runs command
     pub fn launch(&self, config: &Config, args: Vec<String>) -> Result<()> {
         self.get_entry()?.exec(config, ExecMode::Launch, args)
+    }
+
+    /// Issue a warning if the given handler is invalid
+    pub fn warn_if_invalid(&self) {
+        if let Err(e) = self.get_entry() {
+            warn!("The desktop entry `{}` is invalid: {}", self, e);
+        }
     }
 }
 
