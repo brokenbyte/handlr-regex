@@ -7,7 +7,7 @@ pub enum Error {
     Xdg(#[from] xdg::BaseDirectoriesError),
     #[error(transparent)]
     Config(#[from] confy::ConfyError),
-    #[error("no handlers found for '{0}'")]
+    #[error("No handlers found for '{0}'")]
     NotFound(String),
     #[error(
         "Could not find a mimetype associated with the file extension: '{0}'"
@@ -15,15 +15,15 @@ pub enum Error {
     AmbiguousExtension(String),
     #[error(transparent)]
     BadMimeType(#[from] mime::FromStrError),
-    #[error("bad mime: {0}")]
+    #[error("Bad mime: {0}")]
     InvalidMime(mime::Mime),
-    #[error("malformed desktop entry at {0}")]
+    #[error("Malformed desktop entry at {0}")]
     BadEntry(std::path::PathBuf),
     #[error(transparent)]
     BadRegex(#[from] regex::Error),
-    #[error("error spawning selector process '{0}'")]
+    #[error("Error spawning selector process '{0}'")]
     Selector(String),
-    #[error("selection cancelled")]
+    #[error("Selection cancelled")]
     Cancelled,
     #[error("Please specify the default terminal with handlr set x-scheme-handler/terminal")]
     NoTerminal,
