@@ -1,3 +1,5 @@
+use tracing::{error, info};
+
 /// Custom error type
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
@@ -47,6 +49,15 @@ pub enum Error {
     #[cfg(test)]
     #[error(transparent)]
     FromUtf8(#[from] std::string::FromUtf8Error),
+}
+
+impl Error {
+    pub fn log(&self) {
+        match self {
+            Self::Cancelled => info!("{}", self),
+            _ => error!("{}", self),
+        }
+    }
 }
 
 pub type Result<T, E = Error> = std::result::Result<T, E>;

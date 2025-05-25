@@ -26,8 +26,8 @@ fn main() {
     let _guard = init_tracing(&cli)
         .expect("handlr error: Could not initialize global tracing subscriber");
 
-    if let Err(e) = run(cli) {
-        tracing::error!("{}", e)
+    if let Err(error) = run(cli) {
+        error.log()
     }
 }
 
