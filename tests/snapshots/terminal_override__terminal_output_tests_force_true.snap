@@ -4,6 +4,8 @@ info:
   program: handlr
   args:
     - "--force-terminal-output=true"
+    - "-vvv"
+    - "--disable-notifications"
     - mime
     - "./assets"
 ---
@@ -17,3 +19,7 @@ exit_code: 0
 └──────────┴────────────────────────┘
 
 ----- stderr -----
+[2m[TIMESTAMP][0m [34mDEBUG[0m [2mhandlr[0m[2m:[0m Interactive terminal detected: true
+[2m[TIMESTAMP][0m [32m INFO[0m [2mhandlr::common::path[0m[2m:[0m Printing mime information for paths: ["./assets"]
+[2m[TIMESTAMP][0m [34mDEBUG[0m [2mhandlr::common::path[0m[2m:[0m JSON output: false
+[2m[TIMESTAMP][0m [32m INFO[0m [2mhandlr::common::path[0m[2m:[0m Finished printing mime information

@@ -46,7 +46,7 @@ name = "handlr"
 path = "src/main.rs"
 
 [dev-dependencies]
-insta = "1.42.2"
+insta = { version = "1.42.2", features = ["filters"] }
 insta-cmd = "0.6.0"
 similar-asserts = "1.7.0"
 

@@ -1135,6 +1135,7 @@ dependencies = [
  "linked-hash-map",
  "once_cell",
  "pin-project",
+ "regex",
  "serde",
  "similar",
 ]
