@@ -25,7 +25,6 @@ pub fn init_tracing(cli: &Cli) -> Result<WorkerGuard> {
             // Send logs to stdout as determined by cli args
             .with(
                 fmt::Layer::new()
-                    .pretty()
                     .with_writer(std::io::stderr)
                     .with_filter(env_filter()),
             )
