@@ -1,14 +1,17 @@
 // FIXME
 #![allow(clippy::mutable_key_type)]
 
+use itertools::Itertools;
 use mime::Mime;
 use serde::Serialize;
 use std::{
     collections::{BTreeMap, HashMap, VecDeque},
+    fmt::Display,
     io::Write,
     str::FromStr,
 };
 use tabled::Tabled;
+use tracing::{debug, info};
 
 use crate::{
     apps::{DesktopList, MimeApps, SystemApps},
@@ -51,7 +54,13 @@ impl Config {
     pub fn get_handler(&self, mime: &Mime) -> Result<DesktopHandler> {
         match self.mime_apps.get_handler_from_user(mime, &self.config) {
             Err(e) if matches!(e, Error::Cancelled) => Err(e),
-            h => h.or_else(|_| self.get_handler_from_added_associations(mime)),
+            h => h
+                .inspect(|_| {
+                    info!("Match found for `{}` in mimeapps.list Default Associations", mime);
+                })
+                .or_else(|_|{
+                    info!("No match for `{}` in mimeapps.list Default Associations", mime);
+                    self.get_handler_from_added_associations(mime)}),
         }
     }
 
@@ -64,18 +73,33 @@ impl Config {
         self.mime_apps
             .added_associations
             .get(mime)
+            .inspect(|_|
+                info!("Found matching entry for `{}` in mimeapps.list Added Associations", mime)
+            )
             .map_or_else(
-                || self.system_apps.get_handler(mime),
+                || {
+                    info!("No matching entries for `{}` in mimeapps.list Added Associations", mime);
+                    self.system_apps.get_handler(mime)
+                },
                 |h| h.front().cloned(),
             )
-            .ok_or_else(|| Error::NotFound(mime.to_string()))
+            .ok_or_else(|| {
+                info!("No matching installed handlers found for `{}`", mime);
+                Error::NotFound(mime.to_string())
+            })
     }
 
     /// Given a mime and arguments, launch the associated handler with the arguments
     #[mutants::skip] // Cannot test directly, runs external command
     pub fn launch_handler(&self, mime: &Mime, args: Vec<String>) -> Result<()> {
+        info!(
+            "Launching handler for `{}` with arguments: {:?}",
+            mime, args
+        );
         self.get_handler(mime)?
-            .launch(self, args.into_iter().map(|a| a.to_string()).collect())
+            .launch(self, args.into_iter().map(|a| a.to_string()).collect())?;
+        info!("Finished launching handler");
+        Ok(())
     }
 
     /// Get the handler associated with a given mime
@@ -85,6 +109,9 @@ impl Config {
         mime: &Mime,
         output_json: bool,
     ) -> Result<()> {
+        info!("Showing handler for `{}`", mime);
+        debug!("JSON output: {}", output_json);
+
         let handler = self.get_handler(mime)?;
 
         let output = if output_json {
@@ -101,6 +128,8 @@ impl Config {
             handler.to_string()
         };
         writeln!(writer, "{output}")?;
+
+        info!("Finished showing handler");
         Ok(())
     }
 
@@ -111,12 +140,17 @@ impl Config {
         mime: &Mime,
         handler: &DesktopHandler,
     ) -> Result<()> {
+        info!("Setting `{}` as handler for `{}`", handler, mime);
+
         self.mime_apps.set_handler(
             mime,
             handler,
             self.config.expand_wildcards,
         )?;
-        self.mime_apps.save()
+        self.mime_apps.save()?;
+
+        info!("Finished setting handler");
+        Ok(())
     }
 
     /// Add a handler to an existing default application association
@@ -126,22 +160,41 @@ impl Config {
         mime: &Mime,
         handler: &DesktopHandler,
     ) -> Result<()> {
+        info!("Adding {} to list of handlers for `{}`", handler, mime);
+
         self.mime_apps.add_handler(
             mime,
             handler,
             self.config.expand_wildcards,
         )?;
-        self.mime_apps.save()
+        self.mime_apps.save()?;
+
+        info!("Finished adding handler");
+        Ok(())
     }
 
     /// Open the given paths with their respective handlers
     #[mutants::skip] // Cannot test directly, runs external commands
     pub fn open_paths(&self, paths: &[UserPath]) -> Result<()> {
+        fn format_paths<T: Display>(paths: &[T]) -> String {
+            format!(
+                "[{}]",
+                paths
+                    .iter()
+                    .format_with(", ", |str, f| f(&format!("\"{}\"", str)))
+            )
+        }
+
+        info!("Started opening paths: {}", format_paths(paths));
+
         for (handler, paths) in
             self.assign_files_to_handlers(paths)?.into_iter()
         {
+            debug!("Opening {} using `{}`", format_paths(&paths), handler);
             handler.open(self, paths)?;
         }
+
+        info!("Finished opening paths");
 
         Ok(())
     }
@@ -166,8 +219,10 @@ impl Config {
     /// Get the handler associated with a given path
     fn get_handler_from_path(&self, path: &UserPath) -> Result<Handler> {
         Ok(if let Ok(handler) = self.config.get_regex_handler(path) {
+            info!("Using regex handler for `{}`", path);
             handler.into()
         } else {
+            info!("No matching regex handlers found for `{}`", path);
             self.get_handler(&path.get_mime()?)?.into()
         })
     }
@@ -202,6 +257,9 @@ impl Config {
         detailed: bool,
         output_json: bool,
     ) -> Result<()> {
+        info!("Printing associations");
+        debug!("JSON output: {}", output_json);
+
         let mimeapps_table = MimeAppsTable::new(
             &self.mime_apps,
             &self.system_apps,
@@ -259,15 +317,19 @@ impl Config {
             )?
         }
 
+        info!("Finished printing associations");
         Ok(())
     }
 
     /// Entirely remove a given mime's default application association
     pub fn unset_handler(&mut self, mime: &Mime) -> Result<()> {
+        info!("Unsetting handler for `{}`", mime);
+
         if self.mime_apps.unset_handler(mime).is_some() {
             self.mime_apps.save()?
         }
 
+        info!("Finished unsetting handler");
         Ok(())
     }
 
@@ -277,10 +339,16 @@ impl Config {
         mime: &Mime,
         handler: &DesktopHandler,
     ) -> Result<()> {
+        info!(
+            "Removing `{}` from list of handlers for `{}`",
+            handler, mime
+        );
+
         if self.mime_apps.remove_handler(mime, handler).is_some() {
             self.mime_apps.save()?
         }
 
+        info!("Finished removing handler");
         Ok(())
     }
 

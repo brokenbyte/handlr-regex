@@ -17,6 +17,7 @@ use std::{
     path::PathBuf,
     str::FromStr,
 };
+use tracing::{debug, info};
 use wildmatch::WildMatch;
 
 /// Represents user-configured mimeapps.list file
@@ -80,6 +81,8 @@ impl MimeApps {
         // Warn the user if the given handler does not exist
         handler.warn_if_invalid();
 
+        debug!("Expanding wildcards in mimeapps.list: {}", expand_wildcards);
+
         if expand_wildcards {
             let wildcard = WildMatch::new(mime.as_ref());
             mime_types()
@@ -98,6 +101,8 @@ impl MimeApps {
                 .or_default()
                 .push_back(handler.clone());
         }
+
+        self.log_handler_change(mime);
         Ok(())
     }
 
@@ -110,6 +115,8 @@ impl MimeApps {
     ) -> Result<()> {
         // Warn the user if the given handler does not exist
         handler.warn_if_invalid();
+
+        debug!("Expanding wildcards in mimeapps.list: {}", expand_wildcards);
 
         if expand_wildcards {
             let wildcard = WildMatch::new(mime.as_ref());
@@ -129,6 +136,8 @@ impl MimeApps {
                 DesktopList(vec![handler.clone()].into()),
             );
         }
+
+        self.log_handler_change(mime);
         Ok(())
     }
 
@@ -144,7 +153,10 @@ impl MimeApps {
                 Some(())
             },
             |_| Some(()),
-        )
+        )?;
+
+        self.log_handler_change(mime);
+        Some(())
     }
 
     /// Remove a given handler from a given mime's default file associaion
@@ -179,7 +191,29 @@ impl MimeApps {
                     Some(())
                 },
                 |_| Some(()),
+            );
+
+        self.log_handler_change(mime);
+        Some(())
+    }
+
+    /// Helper function to log a change in set handlers
+    fn log_handler_change(&self, mime: &Mime) {
+        // Fallback value for empty handler list
+        const DEFAULT: &str = "<None>";
+
+        debug!(
+            "New handlers for `{}`: {}",
+            mime,
+            self.default_apps.get(mime).map_or(
+                DEFAULT.to_string(),
+                |handlers| if handlers.is_empty() {
+                    DEFAULT.to_string()
+                } else {
+                    handlers.to_string()
+                }
             )
+        );
     }
 
     /// Get a list of handlers associated with a wildcard mime
@@ -209,7 +243,7 @@ impl MimeApps {
     }
 
     /// Get the handler associated with a given mime from mimeapps.list's default apps
-    #[mutants::skip] // Cannot entirely test, namely cannot test selector or filtering
+    #[mutants::skip] // Cannot entirely test, namely cannot test selector or filtering and associated logging
     pub fn get_handler_from_user(
         &self,
         mime: &Mime,
@@ -223,20 +257,42 @@ impl MimeApps {
             .or_else(|| self.get_from_wildcard(mime))
         {
             Some(handlers) => {
+                debug!(
+                    "Configured handlers for `{}` in mimeapps.list Default Associations: {}",
+                    mime, handlers
+                );
                 // Prepares for selector and filters out apps that do not exist
                 let handlers = handlers
                     .iter()
                     .flat_map(|h| -> Result<(&DesktopHandler, String)> {
                         // Filtering breaks testing, so treat every app as valid
+                        // TODO: test logging
+
                         if cfg!(test) {
                             Ok((h, h.to_string()))
                         } else {
-                            Ok((h, h.get_entry()?.name))
+                            let entry = h.get_entry();
+                            if let Err(ref e) = entry {
+                                debug!(
+                                    "Desktop entry `{}` is invalid: {}",
+                                    h, e
+                                );
+                            } else {
+                                debug!("Desktop entry `{}` is valid", h);
+                            }
+
+                            Ok((h, entry?.name))
                         }
                     })
                     .collect_vec();
 
+                debug!(
+                    "Selector enabled: {}, number of set handlers: {}",
+                    config_file.enable_selector,
+                    handlers.len()
+                );
                 if config_file.enable_selector && handlers.len() > 1 {
+                    info!("Running selector: {}", &config_file.selector);
                     let handler = {
                         let name = select(
                             &config_file.selector,
@@ -253,10 +309,14 @@ impl MimeApps {
 
                     Ok(handler)
                 } else {
+                    info!("Not running selector, choosing first handler");
                     Ok(handlers.first().ok_or(error)?.0.clone())
                 }
             }
-            None => Err(error),
+            None => {
+                info!("No handlers configured for `{}` in mimeapps.list Default associations", mime);
+                Err(error)
+            }
         }
     }
 

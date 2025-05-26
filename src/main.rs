@@ -13,6 +13,7 @@ use logging::init_tracing;
 
 use clap::{CommandFactory, Parser};
 use clap_complete::CompleteEnv;
+use tracing::debug;
 
 #[mutants::skip] // Cannot test directly at the moment
 fn main() {
@@ -37,6 +38,8 @@ fn run(cli: Cli) -> Result<()> {
     let mut config = Config::new(cli.terminal_output())?;
 
     let mut stdout = std::io::stdout().lock();
+
+    debug!("Interactive terminal detected: {}", config.terminal_output);
 
     match cli.command {
         Cmd::Set { mime, handler } => config.set_handler(&mime, &handler),

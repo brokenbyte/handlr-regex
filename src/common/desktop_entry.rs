@@ -16,6 +16,7 @@ use std::{
     process::{Command, Stdio},
     str::FromStr,
 };
+use tracing::debug;
 
 /// Represents a desktop entry file for an application
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
@@ -72,6 +73,7 @@ impl DesktopEntry {
     fn exec_inner(&self, config: &Config, args: Vec<String>) -> Result<()> {
         let mut cmd = {
             let (cmd, args) = self.get_cmd(config, args)?;
+            debug!("Executing program \"{}\" with args: {:?}", cmd, args);
             let mut cmd = Command::new(cmd);
             cmd.args(args);
             cmd

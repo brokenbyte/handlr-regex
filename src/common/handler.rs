@@ -3,8 +3,9 @@ use crate::{
     config::Config,
     error::{Error, Result},
 };
-use derive_more::Deref;
+use derive_more::{Deref, Display};
 use enum_dispatch::enum_dispatch;
+use itertools::Itertools;
 use serde::{Deserialize, Serialize};
 use std::{
     convert::TryFrom,
@@ -14,11 +15,11 @@ use std::{
     path::PathBuf,
     str::FromStr,
 };
-use tracing::warn;
+use tracing::{debug, info, warn};
 
 /// Represents a program or command that is used to open a file
 #[enum_dispatch(Handleable)]
-#[derive(Debug, PartialEq, Eq, Hash)]
+#[derive(Display, Debug, PartialEq, Eq, Hash)]
 pub enum Handler {
     DesktopHandler,
     RegexHandler,
@@ -93,6 +94,7 @@ impl DesktopHandler {
     /// Launch a DesktopHandler's desktop entry
     #[mutants::skip] // Cannot test directly, runs command
     pub fn launch(&self, config: &Config, args: Vec<String>) -> Result<()> {
+        info!("Launching `{}` with args: {:?}", self, args);
         self.get_entry()?.exec(config, ExecMode::Launch, args)
     }
 
@@ -105,7 +107,8 @@ impl DesktopHandler {
 }
 
 /// Represents a regex handler from the config
-#[derive(Debug, Clone, PartialEq, Eq, Hash, Deserialize)]
+#[derive(Display, Debug, Clone, PartialEq, Eq, Hash, Deserialize)]
+#[display(fmt = "\"{}\" (Regex Handler)", exec)]
 pub struct RegexHandler {
     exec: String,
     #[serde(default)]
@@ -116,7 +119,24 @@ pub struct RegexHandler {
 impl RegexHandler {
     /// Test if a given path matches the handler's regex
     fn is_match(&self, path: &str) -> bool {
-        self.regexes.is_match(path)
+        let is_match = self.regexes.is_match(path);
+
+        if is_match {
+            let matches = self
+                .regexes
+                .matches(path)
+                .into_iter()
+                .map(|index| &self.regexes.patterns()[index])
+                .collect_vec();
+            debug!(
+                "Regex matches found in `{}` for `{}`: {:?}",
+                self, path, matches
+            );
+        } else {
+            debug!("No regex matches found in `{}` for `{}`", self, path);
+        }
+
+        is_match
     }
 }
 
