@@ -4,6 +4,7 @@ mod common;
 mod config;
 mod error;
 mod logging;
+mod testing;
 
 use cli::{Cli, Cmd};
 use common::mime_table;
