@@ -435,11 +435,14 @@ impl MimeAppsTable {
 
 #[cfg(test)]
 mod tests {
+    use std::io::Read;
+
+    use crate::testing;
+
     use super::*;
     use similar_asserts::assert_eq;
 
-    #[test]
-    fn wildcard_mimes() -> Result<()> {
+    crate::logs_snapshot_test!(wildcard_mimes, {
         let mut config = Config::default();
         config.add_handler(
             &Mime::from_str("video/*")?,
@@ -468,9 +471,7 @@ mod tests {
                 .to_string(),
             "brave.desktop"
         );
-
-        Ok(())
-    }
+    });
 
     #[test]
     fn complex_wildcard_mimes() -> Result<()> {
@@ -571,40 +572,31 @@ mod tests {
         Ok(())
     }
 
-    #[test]
-    fn print_handlers_default() -> Result<()> {
+    crate::logs_snapshot_test!(print_handlers_default, {
         let mut buffer = Vec::new();
         print_handlers_test(&mut buffer, false, false, true)?;
         insta::assert_snapshot!(String::from_utf8(buffer)?);
-        Ok(())
-    }
+    });
 
-    #[test]
-    fn print_handlers_piped() -> Result<()> {
+    crate::logs_snapshot_test!(print_handlers_piped, {
         let mut buffer = Vec::new();
         print_handlers_test(&mut buffer, false, false, false)?;
         insta::assert_snapshot!(String::from_utf8(buffer)?);
-        Ok(())
-    }
+    });
 
-    #[test]
-    fn print_handlers_detailed() -> Result<()> {
+    crate::logs_snapshot_test!(print_handlers_detailed, {
         let mut buffer = Vec::new();
         print_handlers_test(&mut buffer, true, false, true)?;
         insta::assert_snapshot!(String::from_utf8(buffer)?);
-        Ok(())
-    }
+    });
 
-    #[test]
-    fn print_handlers_detailed_piped() -> Result<()> {
+    crate::logs_snapshot_test!(print_handlers_detailed_piped, {
         let mut buffer = Vec::new();
         print_handlers_test(&mut buffer, true, false, false)?;
         insta::assert_snapshot!(String::from_utf8(buffer)?);
-        Ok(())
-    }
+    });
 
-    #[test]
-    fn print_handlers_json() -> Result<()> {
+    crate::logs_snapshot_test!(print_handlers_json, {
         // NOTE: both calls should have the same result
         // JSON output and terminal output
         let mut buffer = Vec::new();
@@ -615,12 +607,9 @@ mod tests {
         let mut buffer = Vec::new();
         print_handlers_test(&mut buffer, false, true, false)?;
         insta::assert_snapshot!(String::from_utf8(buffer)?);
+    });
 
-        Ok(())
-    }
-
-    #[test]
-    fn print_handlers_detailed_json() -> Result<()> {
+    crate::logs_snapshot_test!(print_handlers_detailed_json, {
         // NOTE: both calls should have the same result
         // JSON output and terminal output
         let mut buffer = Vec::new();
@@ -631,12 +620,9 @@ mod tests {
         let mut buffer = Vec::new();
         print_handlers_test(&mut buffer, true, true, false)?;
         insta::assert_snapshot!(String::from_utf8(buffer)?);
+    });
 
-        Ok(())
-    }
-
-    #[test]
-    fn terminal_command_set() -> Result<()> {
+    crate::logs_snapshot_test!(terminal_command_set, {
         let mut config = Config::default();
 
         config.add_handler(
@@ -647,12 +633,9 @@ mod tests {
         )?;
 
         assert_eq!(config.terminal()?, "wezterm start --cwd . -e");
+    });
 
-        Ok(())
-    }
-
-    #[test]
-    fn terminal_command_fallback() -> Result<()> {
+    crate::logs_snapshot_test!(terminal_command_fallback, {
         let mut config = Config::default();
 
         config
@@ -662,9 +645,7 @@ mod tests {
             )?);
 
         assert_eq!(config.terminal()?, "wezterm start --cwd . -e");
-
-        Ok(())
-    }
+    });
 
     fn test_show_handler<W: Write>(
         writer: &mut W,
@@ -695,42 +676,31 @@ mod tests {
         Ok(())
     }
 
-    #[test]
     // NOTE: result will begin with tests/assets/, which is normal ONLY for tests
-    fn show_handler() -> Result<()> {
+    crate::logs_snapshot_test!(show_handler, {
         let mut buffer = Vec::new();
         test_show_handler(&mut buffer, false, false)?;
-        println!("{}", String::from_utf8(buffer.clone())?);
         insta::assert_snapshot!(String::from_utf8(buffer)?);
-        Ok(())
-    }
+    });
 
-    #[test]
-    fn show_handler_json() -> Result<()> {
+    crate::logs_snapshot_test!(show_handler_json, {
         let mut buffer = Vec::new();
         test_show_handler(&mut buffer, true, false)?;
-        println!("{}", String::from_utf8(buffer.clone())?);
         insta::assert_snapshot!(String::from_utf8(buffer)?);
-        Ok(())
-    }
+    });
 
-    #[test]
     // NOTE: result will begin with tests/, which is normal ONLY for tests
-    fn show_handler_terminal() -> Result<()> {
+    crate::logs_snapshot_test!(show_handler_terminal, {
         let mut buffer = Vec::new();
         test_show_handler(&mut buffer, false, true)?;
-        println!("{}", String::from_utf8(buffer.clone())?);
         insta::assert_snapshot!(String::from_utf8(buffer)?);
-        Ok(())
-    }
-    #[test]
-    fn show_handler_json_terminal() -> Result<()> {
+    });
+
+    crate::logs_snapshot_test!(show_handler_json_terminal, {
         let mut buffer = Vec::new();
         test_show_handler(&mut buffer, true, true)?;
-        println!("{}", String::from_utf8(buffer.clone())?);
         insta::assert_snapshot!(String::from_utf8(buffer)?);
-        Ok(())
-    }
+    });
 
     fn test_add_handlers(config: &mut Config) -> Result<()> {
         config.add_handler(
@@ -815,48 +785,31 @@ mod tests {
         Ok(())
     }
 
-    #[test]
-    fn add_and_remove_handlers() -> Result<()> {
+    crate::logs_snapshot_test!(add_and_remove_handlers, {
         let mut config = Config::default();
-
         test_add_handlers(&mut config)?;
         test_remove_handlers(&mut config)?;
+    });
 
-        Ok(())
-    }
-
-    #[test]
-    fn set_and_unset_handlers() -> Result<()> {
+    crate::logs_snapshot_test!(set_and_unset_handlers, {
         let mut config = Config::default();
-
         test_set_handlers(&mut config)?;
         test_unset_handlers(&mut config)?;
+    });
 
-        Ok(())
-    }
-
-    #[test]
-    fn add_and_unset_handlers() -> Result<()> {
+    crate::logs_snapshot_test!(add_and_unset_handlers, {
         let mut config = Config::default();
-
         test_add_handlers(&mut config)?;
         test_unset_handlers(&mut config)?;
+    });
 
-        Ok(())
-    }
-
-    #[test]
-    fn set_and_remove_handlers() -> Result<()> {
+    crate::logs_snapshot_test!(set_and_remove_handlers, {
         let mut config = Config::default();
-
         test_set_handlers(&mut config)?;
         test_remove_handlers(&mut config)?;
+    });
 
-        Ok(())
-    }
-
-    #[test]
-    fn override_selector() -> Result<()> {
+    crate::logs_snapshot_test!(override_selector, {
         let mut config = Config::default();
 
         // Ensure defaults are as expected just in case
@@ -883,12 +836,9 @@ mod tests {
             "fuzzel --dmenu --prompt='Open With: '"
         );
         assert_eq!(config.config.enable_selector, false);
+    });
 
-        Ok(())
-    }
-
-    #[test]
-    fn dont_override_selector() -> Result<()> {
+    crate::logs_snapshot_test!(dont_override_selector, {
         // NOTE: `enable_selector` and `disable_selector` should not both be true in practice anyways
 
         let mut config = Config::default();
@@ -935,12 +885,9 @@ mod tests {
 
         assert_eq!(config.config.selector, "rofi -dmenu -i -p 'Open With: '");
         assert_eq!(config.config.enable_selector, true);
+    });
 
-        Ok(())
-    }
-
-    #[test]
-    fn properly_assign_files_to_handlers() -> Result<()> {
+    crate::logs_snapshot_test!(properly_assign_files_to_handlers, {
         let mut config = Config::default();
         config.add_handler(
             &Mime::from_str("image/png")?,
@@ -998,7 +945,5 @@ mod tests {
             ])?,
             expected_handlers
         );
-
-        Ok(())
-    }
+    });
 }
