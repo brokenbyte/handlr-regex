@@ -313,7 +313,9 @@ mod tests {
 
     #[test]
     fn test_autocomplete_mimes() {
-        insta::assert_debug_snapshot!(autocomplete_mimes(OsStr::new("")));
+        insta::assert_compact_debug_snapshot!(autocomplete_mimes(OsStr::new(
+            ""
+        )));
     }
 
     #[test]
