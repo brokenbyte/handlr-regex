@@ -151,6 +151,19 @@ See [`clap_complete`'s documentation](https://docs.rs/clap_complete/latest/clap_
 > [!NOTE]
 > This currently relies on unstable features of the `clap_complete` crate and may potentially change in the future.
 
+## Logging
+
+Since v0.13.0, `handlr-regex` supports logs to help with troubleshooting.
+
+Logs are output in three ways:
+- stderr
+- notifications (only when neither running in an interactive terminal nor with `--disable-notifications` active)
+- log file at `$XDG_CACHE_HOME/handlr/handlr.log`
+
+By default, for stderr and notifications, only warning and error logs are shown. This can be configured with `--verbose` and `--quiet` as well as with `$RUST_LOG`. All logs are printed to the log file regardless. 
+
+For more information on the syntax for `$RUST_LOG`, see [the documentation for `tracing_subscriber::Envfilter`](https://docs.rs/tracing-subscriber/latest/tracing_subscriber/filter/struct.EnvFilter.html#directives)
+
 ## Screenshots
 
 <table><tr><td>
