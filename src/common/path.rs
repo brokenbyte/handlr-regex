@@ -2,6 +2,7 @@ use crate::{
     common::{render_table, MimeType},
     error::{Error, Result},
 };
+use itertools::Itertools;
 use mime::Mime;
 use serde::Serialize;
 use std::{
@@ -12,6 +13,7 @@ use std::{
     str::FromStr,
 };
 use tabled::Tabled;
+use tracing::{debug, info};
 use url::Url;
 
 #[derive(Debug, Clone)]
@@ -82,6 +84,15 @@ pub fn mime_table<W: Write>(
     output_json: bool,
     terminal_output: bool,
 ) -> Result<()> {
+    info!(
+        "Printing mime information for paths: [{}]",
+        paths
+            .iter()
+            .format_with(", ", |str, f| f(&format!("\"{}\"", str)))
+            .to_string()
+    );
+    debug!("JSON output: {}", output_json);
+
     let rows = paths
         .iter()
         .map(UserPathTable::new)
@@ -95,6 +106,7 @@ pub fn mime_table<W: Write>(
 
     writeln!(writer, "{table}")?;
 
+    info!("Finished printing mime information");
     Ok(())
 }
 

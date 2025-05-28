@@ -3,40 +3,46 @@ mod cli;
 mod common;
 mod config;
 mod error;
-
-use std::io::IsTerminal;
+mod logging;
+mod testing;
 
 use cli::{Cli, Cmd};
 use common::mime_table;
 use config::Config;
 use error::Result;
+use logging::init_tracing;
 
 use clap::{CommandFactory, Parser};
 use clap_complete::CompleteEnv;
+use tracing::debug;
 
 #[mutants::skip] // Cannot test directly at the moment
-fn main() -> Result<()> {
+fn main() {
+    // Shell completions
     CompleteEnv::with_factory(|| Cli::command().name("handlr"))
         .completer("handlr")
         .complete();
 
     let cli = Cli::parse();
 
-    let terminal_output = cli
-        .terminal_output
-        .unwrap_or(std::io::stdout().is_terminal());
+    let _guard = init_tracing(&cli)
+        .expect("handlr error: Could not initialize global tracing subscriber");
 
-    let show_notifications = !terminal_output && cli.enable_notifications;
+    if let Err(error) = run(cli) {
+        error.log()
+    }
+}
 
-    let mut config = notify_on_err(
-        Config::new(terminal_output),
-        "handlr config error",
-        show_notifications,
-    )?;
+/// Run main program logic
+#[mutants::skip] // Cannot test directly at the moment
+fn run(cli: Cli) -> Result<()> {
+    let mut config = Config::new(cli.terminal_output())?;
 
     let mut stdout = std::io::stdout().lock();
 
-    let res = match cli.command {
+    debug!("Interactive terminal detected: {}", config.terminal_output);
+
+    match cli.command {
         Cmd::Set { mime, handler } => config.set_handler(&mime, &handler),
         Cmd::Add { mime, handler } => config.add_handler(&mime, &handler),
         Cmd::Launch {
@@ -68,34 +74,5 @@ fn main() -> Result<()> {
         Cmd::List { all, json } => config.print(&mut stdout, all, json),
         Cmd::Unset { mime } => config.unset_handler(&mime),
         Cmd::Remove { mime, handler } => config.remove_handler(&mime, &handler),
-    };
-
-    notify_on_err(
-        res,
-        "handlr error",
-        show_notifications && config.config.enable_notifications,
-    )
-}
-
-/// Issue a notification if given an error and not running in a terminal
-#[mutants::skip] // Cannot test directly, runs external command
-pub fn notify_on_err<T>(
-    res: Result<T>,
-    title: &str,
-    show_notifications: bool,
-) -> Result<T> {
-    if show_notifications {
-        if let Err(ref e) = res {
-            std::process::Command::new("notify-send")
-                .args([
-                    "--expire-time=10000",
-                    "--icon=dialog-error",
-                    title,
-                    &e.to_string(),
-                ])
-                .spawn()?;
-        }
     }
-
-    res
 }

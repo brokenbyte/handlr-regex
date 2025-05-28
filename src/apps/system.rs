@@ -5,6 +5,7 @@ use crate::{
 };
 use mime::Mime;
 use std::{collections::BTreeMap, convert::TryFrom, ffi::OsString};
+use tracing::debug;
 
 #[derive(Debug, Default, Clone)]
 pub struct SystemApps {
@@ -17,12 +18,25 @@ pub struct SystemApps {
 impl SystemApps {
     /// Get the list of handlers associated with a given mime
     pub fn get_handlers(&self, mime: &Mime) -> Option<DesktopList> {
-        Some(self.associations.get(mime)?.clone())
+        let associations = self.associations.get(mime);
+
+        if associations.is_none() {
+            debug!("No installed handlers found for `{}`", mime);
+        } else {
+            debug!(
+                "Installed handlers found for `{}`: {}",
+                mime, associations?
+            );
+        }
+
+        Some(associations?.clone())
     }
 
     /// Get the primary of handler associated with a given mime
     pub fn get_handler(&self, mime: &Mime) -> Option<DesktopHandler> {
-        Some(self.get_handlers(mime)?.front()?.clone())
+        let handler = self.get_handlers(mime)?.front()?.clone();
+        debug!("Installed handler chosen for `{}`: {}", mime, handler);
+        Some(handler)
     }
 
     /// Get all system-level desktop entries on the system

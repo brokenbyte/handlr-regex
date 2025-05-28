@@ -2,6 +2,7 @@ use crate::error::{Error, Result};
 use derive_more::Deref;
 use mime::Mime;
 use std::{convert::TryFrom, path::Path, str::FromStr};
+use tracing_unwrap::{OptionExt, ResultExt};
 use url::Url;
 
 /// A mime derived from a path or URL
@@ -15,7 +16,7 @@ impl MimeType {
             .get_mime_types_from_file_name(ext)
             .into_iter()
             .nth(0)
-            .expect("handlr: xdg_mime::get_mime_types_from_file_type should always return a non-empty Vec<Mime>")
+            .expect_or_log("The function xdg_mime::get_mime_types_from_file_type should always return a non-empty Vec<Mime>")
         {
             // If the file extension is ambiguous, then error
             // Otherwise, the user may not expect this mimetype being assigned
@@ -49,7 +50,7 @@ impl TryFrom<&Path> for MimeType {
         if mime
             == "application/x-zerosize"
                 .parse::<Mime>()
-                .expect("handlr: hardcoded mime should be valid")
+                .expect_or_log("Hardcoded mime should be valid")
         {
             mime = guess.path(path).guess().mime_type().clone();
         }

@@ -7,7 +7,8 @@ use clap_complete::{
     engine::{ArgValueCompleter, CompletionCandidate},
     PathCompleter,
 };
-use std::{ffi::OsStr, fmt::Write};
+use clap_verbosity_flag::{Verbosity, WarnLevel};
+use std::{ffi::OsStr, fmt::Write, io::IsTerminal};
 
 /// A better xdg-utils
 ///
@@ -16,6 +17,12 @@ use std::{ffi::OsStr, fmt::Write};
 /// Based on handlr at <https://github.com/chmln/handlr>
 ///
 /// Regular expression handlers inspired by mimeo at <https://xyne.dev/projects/mimeo/>
+///
+/// Mime associations file location: $XDG_CONFIG_HOME/mimeapps.list
+///
+/// Config file location: $XDG_CONFIG_HOME/handlr/handlr.toml
+///
+/// Log file location: $XDG_CACHE_HOME/handlr/handlr.log
 #[deny(missing_docs)]
 #[derive(Parser)]
 #[clap(disable_help_subcommand = true)]
@@ -26,11 +33,26 @@ pub struct Cli {
 
     /// Disable notifications on error
     #[clap(global = true, long = "disable-notifications", short = 'n', action = ArgAction::SetFalse)]
-    pub enable_notifications: bool,
+    enable_notifications: bool,
 
     /// Overrides whether or not to behave as if the output is an interactive terminal
     #[clap(global = true, long = "force-terminal-output", short = 't')]
-    pub terminal_output: Option<bool>,
+    terminal_output: Option<bool>,
+
+    #[command(flatten)]
+    pub verbosity: Verbosity<WarnLevel>,
+}
+
+#[allow(dead_code)] // These are left unused in the build script that includes this
+impl Cli {
+    pub fn terminal_output(&self) -> bool {
+        self.terminal_output
+            .unwrap_or(std::io::stdout().is_terminal())
+    }
+
+    pub fn show_notifications(&self) -> bool {
+        !self.terminal_output() && self.enable_notifications
+    }
 }
 
 #[deny(missing_docs)]
@@ -271,7 +293,7 @@ fn autocomplete_mimes(current: &OsStr) -> Vec<CompletionCandidate> {
 #[mutants::skip] // Cannot test directly, relies on system state
 fn autocomplete_desktop_files(current: &OsStr) -> Vec<CompletionCandidate> {
     SystemApps::get_entries()
-        .expect("Could not get system desktop entries")
+        .expect("handlr error: Could not get system desktop entries")
         .filter(|(path, _)| {
             path.to_string_lossy()
                 .starts_with(current.to_string_lossy().as_ref())
@@ -279,7 +301,7 @@ fn autocomplete_desktop_files(current: &OsStr) -> Vec<CompletionCandidate> {
         .map(|(path, entry)| {
             let mut name = StyledStr::new();
             write!(name, "{}", entry.name)
-                .expect("Could not write desktop entry name");
+                .expect("handlr error: Could not write desktop entry name");
             CompletionCandidate::new(path).help(Some(name))
         })
         .collect()
@@ -287,10 +309,39 @@ fn autocomplete_desktop_files(current: &OsStr) -> Vec<CompletionCandidate> {
 
 #[cfg(test)]
 mod tests {
+    use std::str::FromStr;
+
+    use crate::error::Result;
+
     use super::*;
 
     #[test]
     fn test_autocomplete_mimes() {
         insta::assert_debug_snapshot!(autocomplete_mimes(OsStr::new("")));
+    }
+
+    #[test]
+    fn test_show_notifications() -> Result<()> {
+        let mut cli = Cli {
+            command: Cmd::Unset {
+                mime: MimeType::from_str("fake/mime")?,
+            },
+            enable_notifications: true,
+            terminal_output: Some(false),
+            verbosity: Verbosity::default(),
+        };
+
+        assert!(cli.show_notifications());
+
+        cli.terminal_output = Some(true);
+        assert!(!cli.show_notifications());
+
+        cli.enable_notifications = false;
+        assert!(!cli.show_notifications());
+
+        cli.terminal_output = Some(true);
+        assert!(!cli.show_notifications());
+
+        Ok(())
     }
 }

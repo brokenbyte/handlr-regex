@@ -4,6 +4,7 @@ use crate::{
     error::Result,
 };
 use serde::{Deserialize, Serialize};
+use tracing::debug;
 
 /// The config file
 #[derive(Debug, Serialize, Deserialize)]
@@ -17,8 +18,6 @@ pub struct ConfigFile {
     pub term_exec_args: Option<String>,
     /// Whether to expand wildcards when saving mimeapps.list
     pub expand_wildcards: bool,
-    /// Whether to show notifications on errors
-    pub enable_notifications: bool,
     /// Regex handlers
     // NOTE: Serializing is only necessary for generating a default config file
     #[serde(skip_serializing)]
@@ -34,7 +33,6 @@ impl Default for ConfigFile {
             // Unfortunately, messes up emulators that don't accept it
             term_exec_args: Some("-e".into()),
             expand_wildcards: false,
-            enable_notifications: true,
             handlers: Default::default(),
         }
     }
@@ -56,11 +54,14 @@ impl ConfigFile {
     /// Currently assumes the config file will never be saved to
     pub fn override_selector(&mut self, selector_args: SelectorArgs) {
         if let Some(selector) = selector_args.selector {
+            debug!("Overriding selector command: {}", selector);
             self.selector = selector;
         }
 
         self.enable_selector = (self.enable_selector
             || selector_args.enable_selector)
             && !selector_args.disable_selector;
+
+        debug!("Selector enabled: {}", self.enable_selector);
     }
 }

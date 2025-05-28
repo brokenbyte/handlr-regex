@@ -1,3 +1,6 @@
+#[path = "../src/testing.rs"]
+mod testing;
+
 use insta_cmd::{assert_cmd_snapshot, get_cargo_bin};
 use std::process::Command;
 
@@ -5,6 +8,8 @@ use std::process::Command;
 fn test_terminal_output(terminal_output: bool) -> Command {
     let mut cmd = Command::new(get_cargo_bin("handlr"));
     cmd.arg(format!("--force-terminal-output={}", terminal_output))
+        .arg("-vvv") // Maximum verbosity
+        .arg("--disable-notifications") // Not much point showing these in tests
         .arg("mime")
         .arg("./assets");
     cmd
@@ -12,10 +17,20 @@ fn test_terminal_output(terminal_output: bool) -> Command {
 
 #[test]
 fn terminal_output_tests_force_true() {
-    assert_cmd_snapshot!(test_terminal_output(true))
+    insta::with_settings!(
+        {
+            filters => testing::timestamp_filter()
+        },
+        { assert_cmd_snapshot!(test_terminal_output(true)) }
+    )
 }
 
 #[test]
 fn terminal_output_tests_force_false() {
-    assert_cmd_snapshot!(test_terminal_output(false))
+    insta::with_settings!(
+        {
+            filters => testing::timestamp_filter()
+        },
+        { assert_cmd_snapshot!(test_terminal_output(false)) }
+    )
 }
