@@ -818,8 +818,7 @@ mod tests {
 
         config.override_selector(SelectorArgs {
             selector: Some("fzf".to_string()),
-            enable_selector: true,
-            disable_selector: false,
+            enable_selector: Some(true),
         });
 
         assert_eq!(config.config.selector, "fzf");
@@ -827,8 +826,7 @@ mod tests {
 
         config.override_selector(SelectorArgs {
             selector: Some("fuzzel --dmenu --prompt='Open With: '".to_string()),
-            enable_selector: false,
-            disable_selector: true,
+            enable_selector: Some(false),
         });
 
         assert_eq!(
@@ -839,8 +837,6 @@ mod tests {
     });
 
     crate::logs_snapshot_test!(dont_override_selector, {
-        // NOTE: `enable_selector` and `disable_selector` should not both be true in practice anyways
-
         let mut config = Config::default();
 
         // Ensure defaults are as expected just in case
@@ -849,8 +845,7 @@ mod tests {
 
         config.override_selector(SelectorArgs {
             selector: None,
-            enable_selector: false,
-            disable_selector: false,
+            enable_selector: None,
         });
 
         assert_eq!(config.config.selector, "rofi -dmenu -i -p 'Open With: '");
@@ -858,8 +853,7 @@ mod tests {
 
         config.override_selector(SelectorArgs {
             selector: None,
-            enable_selector: false,
-            disable_selector: true,
+            enable_selector: Some(false),
         });
 
         assert_eq!(config.config.selector, "rofi -dmenu -i -p 'Open With: '");
@@ -870,8 +864,7 @@ mod tests {
 
         config.override_selector(SelectorArgs {
             selector: None,
-            enable_selector: true,
-            disable_selector: false,
+            enable_selector: Some(true),
         });
 
         assert_eq!(config.config.selector, "rofi -dmenu -i -p 'Open With: '");
@@ -879,8 +872,7 @@ mod tests {
 
         config.override_selector(SelectorArgs {
             selector: None,
-            enable_selector: false,
-            disable_selector: false,
+            enable_selector: None,
         });
 
         assert_eq!(config.config.selector, "rofi -dmenu -i -p 'Open With: '");
