@@ -309,10 +309,39 @@ fn autocomplete_desktop_files(current: &OsStr) -> Vec<CompletionCandidate> {
 
 #[cfg(test)]
 mod tests {
+    use std::str::FromStr;
+
+    use crate::error::Result;
+
     use super::*;
 
     #[test]
     fn test_autocomplete_mimes() {
         insta::assert_debug_snapshot!(autocomplete_mimes(OsStr::new("")));
+    }
+
+    #[test]
+    fn test_show_notifications() -> Result<()> {
+        let mut cli = Cli {
+            command: Cmd::Unset {
+                mime: MimeType::from_str("fake/mime")?,
+            },
+            enable_notifications: true,
+            terminal_output: Some(false),
+            verbosity: Verbosity::default(),
+        };
+
+        assert!(cli.show_notifications());
+
+        cli.terminal_output = Some(true);
+        assert!(!cli.show_notifications());
+
+        cli.enable_notifications = false;
+        assert!(!cli.show_notifications());
+
+        cli.terminal_output = Some(true);
+        assert!(!cli.show_notifications());
+
+        Ok(())
     }
 }

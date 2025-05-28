@@ -53,6 +53,7 @@ impl<S> Layer<S> for NotificationLayer
 where
     S: tracing::Subscriber,
 {
+    #[mutants::skip] // Cannot test, relies on dbus
     fn on_event(
         &self,
         event: &tracing::Event,
@@ -96,6 +97,7 @@ where
 struct NotificationVisitor<'a>(&'a mut String);
 
 impl Visit for NotificationVisitor<'_> {
+    #[mutants::skip] // Cannot test independently of NotificationLayer
     fn record_debug(
         &mut self,
         field: &tracing::field::Field,

@@ -52,6 +52,7 @@ pub enum Error {
 }
 
 impl Error {
+    #[mutants::skip] // Cannot test, relies on user input
     pub fn log(&self) {
         match self {
             Self::Cancelled => info!("{}", self),
