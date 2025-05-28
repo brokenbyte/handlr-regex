@@ -58,9 +58,9 @@ impl ConfigFile {
             self.selector = selector;
         }
 
-        self.enable_selector = (self.enable_selector
-            || selector_args.enable_selector)
-            && !selector_args.disable_selector;
+        self.enable_selector = selector_args
+            .enable_selector
+            .unwrap_or(self.enable_selector);
 
         debug!("Selector enabled: {}", self.enable_selector);
     }

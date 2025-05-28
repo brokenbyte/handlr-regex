@@ -267,13 +267,9 @@ pub struct SelectorArgs {
     /// Override the configured selector command
     #[clap(long, short)]
     pub selector: Option<String>,
-    /// Enable selector, overrides `enable_selector`
+    /// Override whether or not the selector is enabled
     #[clap(long, short)]
-    pub enable_selector: bool,
-    /// Disable selector, overrides `enable_selector`
-    #[clap(long, short)]
-    #[clap(overrides_with = "enable_selector")]
-    pub disable_selector: bool,
+    pub enable_selector: Option<bool>,
 }
 
 /// Generate candidates for mimes and file extensions to use
