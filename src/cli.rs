@@ -18,11 +18,11 @@ use std::{ffi::OsStr, fmt::Write, io::IsTerminal};
 ///
 /// Regular expression handlers inspired by mimeo at <https://xyne.dev/projects/mimeo/>
 ///
-/// Mime associations file location: ~/.config/mimeapps.list
+/// Mime associations file location: $XDG_CONFIG_HOME/mimeapps.list
 ///
-/// Config file location: ~/.config/handlr/handlr.toml
+/// Config file location: $XDG_CONFIG_HOME/handlr/handlr.toml
 ///
-/// Log file location: ~/.cache/handlr/handlr.log
+/// Log file location: $XDG_CACHE_HOME/handlr/handlr.log
 #[deny(missing_docs)]
 #[derive(Parser)]
 #[clap(disable_help_subcommand = true)]
