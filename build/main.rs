@@ -1,3 +1,6 @@
+// Do not warn when `cfg(executable)` is encountered here in build script
+#![allow(unexpected_cfgs)]
+
 mod cli {
     include!("../src/cli.rs");
 }
@@ -14,6 +17,11 @@ use std::{env, error::Error, fs::create_dir_all, path::Path};
 type DynResult = Result<(), Box<dyn Error>>;
 
 fn main() -> DynResult {
+    // Build handlr with `executable` feature
+    // Needed to help with weirdness involving including modules from src/ into build script
+    println!("cargo:rustc-check-cfg=cfg(executable)");
+    println!("cargo:rustc-cfg=executable");
+
     println!("cargo:rerun-if-changed=build/");
     let out_dir = Path::new(&env::var("OUT_DIR")?).to_path_buf();
     mangen(&out_dir)
