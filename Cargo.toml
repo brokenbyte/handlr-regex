@@ -6,7 +6,6 @@ edition = "2021"
 license = "MIT"
 description = "Fork of handlr with regex support"
 repository = "https://github.com/Anomalocaridid/handlr-regex"
-build = "build/main.rs"
 
 [dependencies]
 clap = { version = "4.5.2", features = ["derive"] }

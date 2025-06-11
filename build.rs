@@ -2,12 +2,15 @@
 #![allow(unexpected_cfgs)]
 
 mod cli {
-    include!("../src/cli.rs");
+    include!("src/cli.rs");
 }
 
 // Trick the cli module into cooperating
-mod apps;
-mod common;
+mod common {
+    pub type DesktopHandler = String;
+    pub type MimeType = String;
+    pub type UserPath = String;
+}
 
 use cli::Cli;
 
