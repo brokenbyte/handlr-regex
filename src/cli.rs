@@ -1,19 +1,31 @@
-// NOTE: `cfg(execute)` is defined in build.rs and serves to let this file be included without worrying about having to pull in dependencies
+// NOTE: `cfg(execute)` is defined in build.rs and represents code to be included in the executable, but not build.rs
 // Only use it when necessary.
 
-use crate::common::{DesktopHandler, MimeType, UserPath};
 use clap::{ArgAction, Args, Parser, Subcommand};
 use clap_complete::{engine::ArgValueCompleter, PathCompleter};
 use clap_verbosity_flag::{Verbosity, WarnLevel};
 
+// Dependencies not needed for the build script
 #[cfg(executable)]
-use crate::{apps::SystemApps, common::mime_types};
+use crate::{
+    apps::SystemApps,
+    common::mime_types,
+    common::{DesktopHandler, MimeType, UserPath},
+};
 #[cfg(executable)]
 use clap::builder::StyledStr;
 #[cfg(executable)]
 use clap_complete::engine::CompletionCandidate;
 #[cfg(executable)]
 use std::{ffi::OsStr, fmt::Write, io::IsTerminal};
+
+// Needed to trick cli.rs to cooperate when `include`d in build.rs
+#[cfg(not(executable))]
+pub type DesktopHandler = String;
+#[cfg(not(executable))]
+pub type MimeType = String;
+#[cfg(not(executable))]
+pub type UserPath = String;
 
 /// A better xdg-utils
 ///

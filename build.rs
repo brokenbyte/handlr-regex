@@ -5,13 +5,6 @@ mod cli {
     include!("src/cli.rs");
 }
 
-// Trick the cli module into cooperating
-mod common {
-    pub type DesktopHandler = String;
-    pub type MimeType = String;
-    pub type UserPath = String;
-}
-
 use cli::Cli;
 
 use clap::CommandFactory;
@@ -20,7 +13,7 @@ use std::{env, error::Error, fs::create_dir_all, path::Path};
 type DynResult = Result<(), Box<dyn Error>>;
 
 fn main() -> DynResult {
-    // Build handlr with `executable` feature
+    // Build handlr with `cfg(executable)`
     // Needed to help with weirdness involving including modules from src/ into build script
     println!("cargo:rustc-check-cfg=cfg(executable)");
     println!("cargo:rustc-cfg=executable");
