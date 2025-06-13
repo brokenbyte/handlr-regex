@@ -1,14 +1,31 @@
+// NOTE: `cfg(execute)` is defined in build.rs and represents code to be included in the executable, but not build.rs
+// Only use it when necessary.
+
+use clap::{ArgAction, Args, Parser, Subcommand};
+use clap_complete::{engine::ArgValueCompleter, PathCompleter};
+use clap_verbosity_flag::{Verbosity, WarnLevel};
+
+// Dependencies not needed for the build script
+#[cfg(executable)]
 use crate::{
     apps::SystemApps,
-    common::{mime_types, DesktopHandler, MimeType, UserPath},
+    common::mime_types,
+    common::{DesktopHandler, MimeType, UserPath},
 };
-use clap::{builder::StyledStr, ArgAction, Args, Parser, Subcommand};
-use clap_complete::{
-    engine::{ArgValueCompleter, CompletionCandidate},
-    PathCompleter,
-};
-use clap_verbosity_flag::{Verbosity, WarnLevel};
+#[cfg(executable)]
+use clap::builder::StyledStr;
+#[cfg(executable)]
+use clap_complete::engine::CompletionCandidate;
+#[cfg(executable)]
 use std::{ffi::OsStr, fmt::Write, io::IsTerminal};
+
+// Needed to trick cli.rs to cooperate when `include`d in build.rs
+#[cfg(not(executable))]
+pub type DesktopHandler = String;
+#[cfg(not(executable))]
+pub type MimeType = String;
+#[cfg(not(executable))]
+pub type UserPath = String;
 
 /// A better xdg-utils
 ///
@@ -43,7 +60,7 @@ pub struct Cli {
     pub verbosity: Verbosity<WarnLevel>,
 }
 
-#[allow(dead_code)] // These are left unused in the build script that includes this
+#[cfg(executable)]
 impl Cli {
     pub fn terminal_output(&self) -> bool {
         self.terminal_output
@@ -112,7 +129,8 @@ pub enum Cmd {
     /// Otherwise, the default handler will be opened.
     Open {
         /// Paths/URLs to open
-        #[clap(required = true, add=ArgValueCompleter::new(PathCompleter::any()))]
+        #[clap(required = true)]
+        #[cfg_attr(executable, clap(add = ArgValueCompleter::new(PathCompleter::any())))]
         paths: Vec<UserPath>,
         #[command(flatten)]
         selector_args: SelectorArgs,
@@ -131,10 +149,10 @@ pub enum Cmd {
     /// Currently does not support regex handlers.
     Set {
         /// Mimetype or file extension to operate on.
-        #[clap(add = ArgValueCompleter::new(autocomplete_mimes))]
+        #[cfg_attr(executable, clap(add = ArgValueCompleter::new(autocomplete_mimes)))]
         mime: MimeType,
         /// Desktop file of handler program
-        #[clap(add = ArgValueCompleter::new(autocomplete_desktop_files))]
+        #[cfg_attr(executable, clap(add = ArgValueCompleter::new(autocomplete_desktop_files)))]
         handler: DesktopHandler,
     },
 
@@ -148,7 +166,7 @@ pub enum Cmd {
     /// Currently does not support regex handlers.
     Unset {
         /// Mimetype or file extension to unset the default handler of
-        #[clap(add = ArgValueCompleter::new(autocomplete_mimes))]
+        #[cfg_attr(executable, clap(add = ArgValueCompleter::new(autocomplete_mimes)))]
         mime: MimeType,
     },
 
@@ -161,7 +179,7 @@ pub enum Cmd {
     /// Otherwise, the default handler will be opened.
     Launch {
         /// Mimetype or file extension to launch the handler of
-        #[clap(add = ArgValueCompleter::new(autocomplete_mimes))]
+        #[cfg_attr(executable, clap(add = ArgValueCompleter::new(autocomplete_mimes)))]
         mime: MimeType,
         /// Arguments to pass to handler program
         // Not necessarily a path, but completing as a path tends to be the expected "default" behavior
@@ -195,7 +213,7 @@ pub enum Cmd {
         #[clap(long)]
         json: bool,
         /// Mimetype to get the handler of
-        #[clap(add = ArgValueCompleter::new(autocomplete_mimes))]
+        #[cfg_attr(executable, clap(add = ArgValueCompleter::new(autocomplete_mimes)))]
         mime: MimeType,
         #[command(flatten)]
         selector_args: SelectorArgs,
@@ -212,10 +230,10 @@ pub enum Cmd {
     /// and does not overwrite existing handlers.
     Add {
         /// Mimetype to add handler to
-        #[clap(add = ArgValueCompleter::new(autocomplete_mimes))]
+        #[cfg_attr(executable, clap(add = ArgValueCompleter::new(autocomplete_mimes)))]
         mime: MimeType,
         /// Desktop file of handler program
-        #[clap(add = ArgValueCompleter::new(autocomplete_desktop_files))]
+        #[cfg_attr(executable, clap(add = ArgValueCompleter::new(autocomplete_desktop_files)))]
         handler: DesktopHandler,
     },
 
@@ -227,10 +245,10 @@ pub enum Cmd {
     /// Otherwise, mimes matching wildcards (e.g. `text/plain`, etc.) will have their handlers removed.
     Remove {
         /// Mimetype to remove handler from
-        #[clap(add = ArgValueCompleter::new(autocomplete_mimes))]
+        #[cfg_attr(executable, clap(add = ArgValueCompleter::new(autocomplete_mimes)))]
         mime: MimeType,
         /// Desktop file of handler program to remove
-        #[clap(add = ArgValueCompleter::new(autocomplete_desktop_files))]
+        #[cfg_attr(executable, clap(add = ArgValueCompleter::new(autocomplete_desktop_files)))]
         handler: DesktopHandler,
     },
 
@@ -273,6 +291,7 @@ pub struct SelectorArgs {
 }
 
 /// Generate candidates for mimes and file extensions to use
+#[cfg(executable)]
 fn autocomplete_mimes(current: &OsStr) -> Vec<CompletionCandidate> {
     let mut mimes = mime_db::EXTENSIONS
         .iter()
@@ -287,6 +306,7 @@ fn autocomplete_mimes(current: &OsStr) -> Vec<CompletionCandidate> {
 
 /// Generate candidates for desktop files
 #[mutants::skip] // Cannot test directly, relies on system state
+#[cfg(executable)]
 fn autocomplete_desktop_files(current: &OsStr) -> Vec<CompletionCandidate> {
     SystemApps::get_entries()
         .expect("handlr error: Could not get system desktop entries")
